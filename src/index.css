@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Kalam:wght@300;400;700&family=Architects+Daughter&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Gochi Hand", cursive;
+  --font-body: "Kalam", cursive;
+  --font-accent: "Architects Daughter", cursive;
+
+  --color-surface: #fffdfa;
+  --color-primary: #2d3436;
+  --color-secondary: #0984e3;
+  --color-tertiary: #d63031;
+  --color-accent: #fdcb6e;
+  
+  --shadow-sketch: 4px 4px 0px 0px rgba(0,0,0,0.1);
+  --shadow-sketch-hover: 6px 6px 0px 0px rgba(0,0,0,0.15);
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-primary selection:bg-accent/30;
+    background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+  }
+}
+
+@layer components {
+  .sketch-border {
+    border: 3px solid var(--color-primary);
+    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    box-shadow: var(--shadow-sketch);
+  }
+
+  .sketch-border-sm {
+    border: 2px solid var(--color-primary);
+    border-radius: 120px 10px 110px 10px/10px 110px 10px 120px;
+  }
+
+  .sketch-button {
+    @apply px-6 py-2 font-headline text-xl transition-all active:translate-x-1 active:translate-y-1;
+    border: 2px solid var(--color-primary);
+    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    box-shadow: 3px 3px 0px 0px rgba(0,0,0,1);
+  }
+
+  .sketch-button:hover {
+    box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+    transform: translate(-2px, -2px);
+  }
+
+  .sketch-card {
+    @apply p-6 bg-white;
+    border: 3px solid var(--color-primary);
+    border-radius: 2% 6% 5% 4% / 1% 1% 2% 4%;
+    box-shadow: var(--shadow-sketch);
+  }
+
+  .marker-highlight {
+    background: linear-gradient(104deg, rgba(253, 203, 110, 0) 0.9%, rgba(253, 203, 110, 0.5) 2.4%, rgba(253, 203, 110, 0.2) 5.8%, rgba(253, 203, 110, 0.1) 93%, rgba(253, 203, 110, 0.3) 96%, rgba(253, 203, 110, 0) 98%), linear-gradient(183deg, rgba(253, 203, 110, 0) 0%, rgba(253, 203, 110, 0.1) 7.9%, rgba(253, 203, 110, 0) 15%);
+    padding: 0 4px;
+    border-radius: 1em 0;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.sketch-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 2s ease-out forwards;
+}

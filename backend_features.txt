@@ -1,0 +1,399 @@
+FINMENTOR INDIA - BACKEND FEATURES (COMPLETE TECHNICAL GUIDE)
+Date: 2026-03-28
+Workspace: d:/financial-monitor
+
+============================================================
+1) BACKEND OVERVIEW
+============================================================
+
+The backend is a modular FastAPI system for Indian personal finance advisory.
+It is designed to be:
+- Agentic (multi-engine, decision-pipeline architecture)
+- Deterministic-first (rules + quantitative finance)
+- ML-augmented (classical ML; no dependency on external LLM APIs)
+- SaaS-ready (structured API contracts, caching, security utilities)
+
+Core stack:
+- FastAPI + Pydantic v2 (typed API contracts)
+- NumPy/Pandas/SciPy stack for quant calculations
+- scikit-learn for calibrated scoring
+- Optional local LLM (Ollama) only for explanation text
+- Redis cache adapter (with in-memory fallback)
+- PostgreSQL connection config available for persistence integration
+
+Backend entrypoints:
+- App bootstrap: backend/app/main.py
+- API router: backend/app/api/router.py
+- Versioned base path: /api/v1
+
+============================================================
+2) MODULAR SERVICE ARCHITECTURE
+============================================================
+
+The backend is split into domain services (engines), each independently testable and composable:
+
+A) FIRE Path Planner
+- File: backend/app/services/financial_engine.py
+- Models: backend/app/models/fire.py
+- Endpoint: POST /api/v1/fire/plan
+
+What it does:
+- Computes required retirement corpus using inflation-adjusted expense projection.
+- Computes monthly SIP required for retirement target.
+- Computes SIP per financial goal.
+- Creates month-by-month investment roadmap until retirement.
+- Runs Monte Carlo simulation to estimate corpus variability.
+
+Key algorithms used:
+- TVM formulas (future value, annuity inversion)
+- SIP inversion (required monthly contribution)
+- Inflation-adjusted retirement corpus model
+- Monte Carlo return simulation (percentile outcomes)
+- Goal-based allocation heuristic by time horizon
+
+Outputs:
+- retirement_corpus_required
+- monthly_sip_for_retirement
+- goals[] with monthly_sip and allocation
+- total_monthly_investment_required
+- roadmap[] (month, age, corpus, contribution)
+- monte_carlo (p10/p50/p90/mean/std)
+- explainability trace
+
+
+B) Money Health Score Engine
+- File: backend/app/services/risk_engine.py
+- ML calibrator: backend/app/services/ml_scoring.py
+- Models: backend/app/models/health.py
+- Endpoint: POST /api/v1/health-score/score
+
+What it does:
+- Computes score components for:
+  - Emergency fund adequacy
+  - Insurance coverage
+  - Debt-to-income
+  - Diversification
+  - Tax efficiency
+  - Retirement readiness
+- Combines weighted deterministic score with ML-calibrated score.
+- Generates actionable recommendations from failed rules.
+
+How scoring works:
+- Deterministic weighted score from 6 dimensions.
+- ML calibration via GradientBoostingRegressor over feature vector.
+- Final score blend: deterministic + ML calibration.
+
+Outputs:
+- score (0-100)
+- weighted_breakdown
+- recommendations[]
+- explainability:
+  - rule trace
+  - top impact factors
+  - model name
+  - feature importance
+
+
+C) Life Event Advisor
+- File: backend/app/services/life_event_engine.py
+- Models: backend/app/models/life_events.py
+- Endpoint: POST /api/v1/life-events/advise
+
+What it does:
+- Event-specific financial decisioning for:
+  - bonus
+  - marriage
+  - child
+  - inheritance
+- Uses heuristic templates + rule logic to balance:
+  - liquidity
+  - debt prepayment
+  - tax-saving allocation
+  - long-term investment
+
+Outputs:
+- optimized_split (category-wise rupee allocation)
+- recommendations[]
+- tax_impact_estimate
+- explainability (template + heuristics + risk profile)
+
+
+D) Tax Optimization Engine (India-specific)
+- File: backend/app/services/tax_engine.py
+- Models: backend/app/models/tax.py
+- Endpoint: POST /api/v1/tax/optimize
+
+What it does:
+- Parses salary structure (Form 16 style JSON payload).
+- Computes old regime tax and new regime tax.
+- Compares regimes and selects better regime.
+- Computes deduction headroom and possible tax-saving estimates.
+- Supports section-wise logic including 80C, 80D, 80CCD(1B), Section 24, HRA.
+
+Tax logic includes:
+- Slab engine for old and new regimes (configured assumptions)
+- Standard deduction handling
+- HRA exemption computation
+- 4% cess application
+- Deduction maximization opportunity map
+
+Outputs:
+- gross_income
+- old_regime_tax
+- new_regime_tax
+- better_regime
+- potential_tax_saving
+- deduction_optimization
+- explainability trace
+
+
+E) Couple Financial Planner
+- File: backend/app/services/optimization_engine.py
+- Models: backend/app/models/couples.py
+- Endpoint: POST /api/v1/couples/plan
+
+What it does:
+- Solves joint optimization problem for two partners.
+- Optimizes split of investible amount to minimize combined tax outflow.
+- Generates target allocation based on risk profile.
+
+Optimization method:
+- Constraint: partner1_share + partner2_share = total investible amount
+- Objective: minimize combined tax after section utilization
+- Solver: deterministic grid-search splitter utility
+
+Outputs:
+- recommended_split
+- joint_tax_outcome
+- target_asset_allocation
+- explainability (objective/constraint/method)
+
+
+F) Mutual Fund Portfolio X-Ray
+- File: backend/app/services/portfolio_engine.py
+- Models: backend/app/models/portfolio.py
+- Endpoints:
+  - POST /api/v1/portfolio/upload-statement
+  - POST /api/v1/portfolio/xray
+  - GET  /api/v1/portfolio/nav/{scheme_code}
+  - GET  /api/v1/portfolio/market/quote/{symbol}
+  - GET  /api/v1/portfolio/market/daily/{symbol}
+
+What it does:
+- Parses transaction statement CSV.
+- Reconstructs holdings by scheme code.
+- Prices holdings using local NAV dataset first.
+- Falls back to mfapi scheme history when local NAV missing.
+- Computes portfolio XIRR from dated cashflows.
+- Computes overlap proxy via token similarity across scheme names.
+- Estimates expense ratio drag.
+- Produces benchmark alpha estimate.
+
+Outputs:
+- portfolio_value
+- xirr
+- holdings[]
+- overlap_analysis
+- expense_ratio_drag
+- benchmark_comparison
+- explainability
+
+============================================================
+3) WHAT DATA IS USED (AND HOW)
+============================================================
+
+Primary data used by backend:
+
+1) User-provided financial input data (API request payloads)
+- Income, expenses, assets, goals
+- Tax components (salary + deductions)
+- Couple profiles
+- Portfolio transactions
+
+2) Local NAV dataset (mandatory local-first source)
+- File: ./data_source/NAVAII.txt
+- Adapter: backend/app/data/nav_repository.py
+- Parsing logic:
+  - Semicolon-separated line parser
+  - Extracts scheme_code, scheme_name, nav, date
+  - Maintains latest NAV per scheme for valuation
+
+3) MFAPI mutual fund source (fallback)
+- Client: backend/app/data/mfapi_client.py
+- URL style: https://api.mfapi.in/mf/{scheme_code}
+- Usage:
+  - Only used when local NAV does not have the requested scheme
+  - Useful for scheme history and dynamic NAV fallback
+
+4) Alpha Vantage market data
+- Client: backend/app/data/alpha_vantage_client.py
+- Key configured in backend settings
+- APIs used:
+  - GLOBAL_QUOTE
+  - TIME_SERIES_DAILY
+- Purpose:
+  - Market reference data for portfolio/benchmark overlays
+  - Additional analytics extension point
+
+5) Synthetic ML calibration data (internal training bootstrap)
+- File: backend/app/services/ml_scoring.py
+- Used only to train a local scoring calibrator model.
+- No user data is sent externally for model training.
+
+Data priority strategy for portfolio valuation:
+1. Local NAV (NAVAII.txt)
+2. MFAPI fallback
+3. Error if data unavailable
+
+============================================================
+4) AGENTIC DESIGN - HOW "AGENTS" WORK HERE
+============================================================
+
+This system is "agentic" through specialized financial engines (domain agents), not through external conversational LLM wrappers.
+
+Agentic pattern in this backend:
+- Each module acts as a domain agent with:
+  - domain-specific input schema
+  - deterministic/quant/ML logic pipeline
+  - explainability trace output
+
+Decision pipeline pattern (common across agents):
+1. Validate input via typed model
+2. Compute deterministic baseline using formulas/rules
+3. Apply optimization or simulation if relevant
+4. Optionally calibrate with local ML model
+5. Generate explainability metadata
+6. Return structured JSON for frontend dashboards
+
+Explainability strategy:
+- Rule tracing for deterministic transparency
+- Input echo and heuristic disclosure
+- Feature importance (ML-backed module)
+- Optional local LLM summarization via Ollama (if enabled)
+
+No external LLM dependency:
+- No GPT/Gemini integration required to run core logic
+- Optional local model integration is isolated and fallback-safe
+
+============================================================
+5) SECURITY, PRIVACY, AND COMPLIANCE POSTURE
+============================================================
+
+Security utilities currently included:
+- Encryption service: backend/app/core/security.py (Fernet)
+- Cache abstraction: backend/app/core/cache.py (Redis + in-memory fallback)
+- Config-driven environment management: backend/app/core/config.py
+- CORS controls configured in backend startup
+
+Compliance-oriented design choices:
+- Core analytics work without sending user financial data to external LLMs
+- Deterministic and auditable recommendations (rule traces)
+- Data minimization by endpoint-specific payload schemas
+- Explicit local data-source usage for NAV
+
+Operational notes:
+- Encryption key should be set in environment for production.
+- Redis and PostgreSQL should be deployed behind private networking.
+- Add JWT auth + RBAC + audit logs for production multi-tenant SaaS.
+
+============================================================
+6) HOW BACKEND CONNECTS TO FRONTEND
+============================================================
+
+Current frontend status:
+- Frontend routes exist in src/pages/* and are currently using local/mock calculations.
+- Frontend is NOT yet wired to backend APIs by default in current code.
+
+Available mapping for integration:
+- /fire-planner       -> POST /api/v1/fire/plan
+- /health-score       -> POST /api/v1/health-score/score
+- /life-advisor       -> POST /api/v1/life-events/advise
+- /tax-wizard         -> POST /api/v1/tax/optimize
+- /couples-planner    -> POST /api/v1/couples/plan
+- /portfolio-xray     ->
+  - POST /api/v1/portfolio/upload-statement
+  - POST /api/v1/portfolio/xray
+  - GET  /api/v1/portfolio/nav/{scheme_code}
+
+Recommended frontend integration flow:
+1. Add API client layer (axios/fetch wrapper)
+2. Set base URL env (example: VITE_API_BASE_URL=http://127.0.0.1:8000)
+3. Replace local mock logic in each page with endpoint calls
+4. Map response fields to charts/cards
+5. Handle loading/error states and retries
+
+Dashboard-ready response design:
+- All endpoints return structured JSON with explicit analytics fields.
+- Explainability metadata is returned alongside recommendations.
+
+============================================================
+7) COMPLETE ENDPOINT LIST
+============================================================
+
+System:
+- GET /health
+
+Finance modules:
+- POST /api/v1/fire/plan
+- POST /api/v1/health-score/score
+- POST /api/v1/life-events/advise
+- POST /api/v1/tax/optimize
+- POST /api/v1/couples/plan
+
+Portfolio + market:
+- POST /api/v1/portfolio/upload-statement
+- POST /api/v1/portfolio/xray
+- GET  /api/v1/portfolio/nav/{scheme_code}
+- GET  /api/v1/portfolio/market/quote/{symbol}
+- GET  /api/v1/portfolio/market/daily/{symbol}?compact=true
+
+============================================================
+8) REQUEST DATA EXPECTATIONS (SUMMARY)
+============================================================
+
+FIRE payload expects:
+- age, income_monthly, expenses_monthly, inflation, expected_return,
+  annual_volatility, current_assets, retirement_age, goals[]
+
+Health score payload expects:
+- monthly_expenses, emergency_fund, annual_income, annual_insurance_cover,
+  monthly_debt_obligation, equity_percent, debt_percent, other_assets_percent,
+  tax_saving_utilization_percent, retirement_progress_percent
+
+Life event payload expects:
+- event_type, amount, annual_income, monthly_expenses,
+  emergency_fund, high_interest_debt, risk_profile
+
+Tax payload expects:
+- form16{basic_salary, hra_received, special_allowance, other_income}
+- deductions{80C,80D,80CCD_1B,home_loan_interest,hra_exemption_claim}
+- city_type, rent_paid_annual
+
+Couples payload expects:
+- partner1, partner2, investible_amount, risk_profile
+
+Portfolio payload expects:
+- transactions[] with scheme_code, scheme_name, date, amount, units, txn_type
+
+============================================================
+9) OPERATIONS & DEPLOYMENT READINESS
+============================================================
+
+Current readiness:
+- Backend dependencies pinned in backend/requirements.txt
+- Versioned API layout ready
+- Core engines complete and independent
+- Local-first data strategy implemented
+
+For production hardening (next steps):
+- Add auth (JWT/OAuth2) and tenant isolation
+- Add persistent DB models and migration layer (Alembic)
+- Add request tracing, structured logs, and audit events
+- Add asynchronous job queue for heavy simulations and large portfolio ingestion
+- Add unit/integration test suite and CI gates
+
+============================================================
+10) ONE-LINE SYSTEM SUMMARY
+============================================================
+
+This backend is a modular, explainable, Indian-finance-focused decision platform that combines deterministic rules, quantitative models, optimization, Monte Carlo simulation, and local ML to power a complete personal finance mentor experience without relying on external LLM APIs.

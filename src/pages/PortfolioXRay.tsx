@@ -1,243 +1,201 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Landmark, TrendingUp, Shield, Brain, ArrowRight, Info, Lightbulb, CheckCircle2, AlertCircle, Upload, Search, PieChart as PieChartIcon, BarChart as BarChartIcon, Sparkles } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { financeApi, uploadPortfolioStatement } from "../services/api";
+
+type PortfolioTxn = {
+  scheme_code: number;
+  scheme_name: string;
+  date: string;
+  amount: number;
+  units: number;
+  txn_type: string;
+};
+
+type PortfolioResult = {
+  portfolio_value: number;
+  xirr: number;
+  holdings: Array<{ scheme_code: number; scheme_name: string; units: number; market_value: number; weight: number }>;
+  overlap_analysis: { pair_count: number; high_overlap_pairs: Array<{ fund_a: string; fund_b: string; similarity_score: number }> };
+  expense_ratio_drag: { weighted_expense_ratio_percent: number; annual_drag_rupees: number };
+  benchmark_comparison: { benchmark_assumption_percent: number; alpha_percent: number };
+};
 
 export default function PortfolioXRay() {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasData, setHasData] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [transactions, setTransactions] = useState<PortfolioTxn[]>([]);
+  const [result, setResult] = useState<PortfolioResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleUpload = () => {
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setHasData(true);
-    }, 2000);
+  const [schemeCode, setSchemeCode] = useState(119551);
+  const [navResult, setNavResult] = useState<Record<string, unknown> | null>(null);
+
+  const [symbol, setSymbol] = useState("NSE:INFY");
+  const [quoteResult, setQuoteResult] = useState<Record<string, unknown> | null>(null);
+
+  const parseAndAnalyze = async () => {
+    if (!file) {
+      setError("Please choose a CSV statement file first");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const uploadResponse = await uploadPortfolioStatement(file);
+      const parsedTxns = (uploadResponse?.transactions || []) as PortfolioTxn[];
+      setTransactions(parsedTxns);
+
+      const xray = await financeApi.portfolioXRay<PortfolioResult>({ transactions: parsedTxns });
+      setResult(xray);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed portfolio analysis");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const allocationData = [
-    { name: "Large Cap", value: 45, color: "#2d3436" },
-    { name: "Mid Cap", value: 30, color: "#ff7675" },
-    { name: "Small Cap", value: 15, color: "#fdcb6e" },
-    { name: "Debt/Gold", value: 10, color: "#55efc4" },
-  ];
+  const fetchNav = async () => {
+    try {
+      const nav = await financeApi.portfolioNav<Record<string, unknown>>(schemeCode);
+      setNavResult(nav);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed NAV lookup");
+    }
+  };
 
-  const performanceData = [
-    { month: "Jan", portfolio: 12, benchmark: 10 },
-    { month: "Feb", portfolio: 15, benchmark: 11 },
-    { month: "Mar", portfolio: 14, benchmark: 12 },
-    { month: "Apr", portfolio: 18, benchmark: 14 },
-    { month: "May", portfolio: 22, benchmark: 16 },
-  ];
+  const fetchQuote = async () => {
+    try {
+      const quote = await financeApi.marketQuote<Record<string, unknown>>(symbol);
+      setQuoteResult(quote);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed market quote lookup");
+    }
+  };
 
   return (
-    <div className="space-y-12 font-body">
-      <header className="text-center space-y-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight"
-        >
-          <span className="marker-highlight px-6">Portfolio X-Ray</span>
-        </motion.h1>
-        <p className="text-primary/70 text-2xl italic">Instant analysis. True XIRR. Actionable insights.</p>
-      </header>
+    <div className="space-y-8">
+      <h1 className="font-headline text-5xl font-black text-primary">Mutual Fund Portfolio X-Ray</h1>
 
-      {!hasData ? (
-        <div className="sketch-card p-20 bg-white flex flex-col items-center justify-center text-center space-y-12 min-h-[600px] relative overflow-hidden">
-          <AnimatePresence mode="wait">
-            {isAnalyzing ? (
-              <motion.div
-                key="analyzing"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.1 }}
-                className="space-y-8"
-              >
-                <div className="relative w-32 h-32 mx-auto">
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 border-4 border-dashed border-primary rounded-full"
-                  ></motion.div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Search className="w-12 h-12 text-primary" />
-                  </div>
-                </div>
-                <h2 className="font-headline font-black text-4xl text-primary">Scanning your portfolio...</h2>
-                <p className="text-2xl text-primary/60 italic">We're calculating your true XIRR and fund overlap.</p>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="upload"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-12"
-              >
-                <div className="w-32 h-32 rounded-full border-2 border-primary/20 flex items-center justify-center mx-auto bg-surface">
-                  <Upload className="w-16 h-16 text-primary/40" />
-                </div>
-                <div className="space-y-4">
-                  <h2 className="font-headline font-black text-5xl text-primary">Drop your CAS Statement</h2>
-                  <p className="text-2xl text-primary/60 italic max-w-lg mx-auto">Upload your CAMS or KFintech PDF. We'll handle the rest.</p>
-                </div>
-                <button 
-                  onClick={handleUpload}
-                  className="sketch-button px-16 py-6 text-3xl font-headline font-black bg-primary text-white hover:bg-primary/90"
-                >
-                  Analyze Now
-                </button>
-                <p className="text-sm text-primary/40 italic font-accent">Your data is encrypted and never stored.</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Decorative elements */}
-          <div className="absolute top-10 left-10 opacity-5">
-            <BarChartIcon className="w-32 h-32 text-primary" />
-          </div>
-          <div className="absolute bottom-10 right-10 opacity-5">
-            <PieChartIcon className="w-32 h-32 text-primary" />
-          </div>
+      <section className="sketch-card bg-white space-y-4">
+        <h2 className="font-headline text-2xl font-bold">Statement Upload & X-Ray</h2>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="w-full border-2 border-primary/20 rounded-xl p-3"
+        />
+        <button className="sketch-button bg-primary text-white" onClick={parseAndAnalyze} disabled={loading}>
+          {loading ? "Analyzing..." : "Upload + Analyze Portfolio"}
+        </button>
+        {error && <p className="text-red-600 font-headline">{error}</p>}
+      </section>
+
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="sketch-card bg-white space-y-3">
+          <h3 className="font-headline text-xl font-bold">NAV Lookup</h3>
+          <input
+            type="number"
+            value={schemeCode}
+            onChange={(e) => setSchemeCode(Number(e.target.value))}
+            className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+          />
+          <button className="sketch-button" onClick={fetchNav}>Fetch Local/Fallback NAV</button>
+          {navResult && <pre className="text-xs overflow-auto bg-surface p-3 rounded-xl">{JSON.stringify(navResult, null, 2)}</pre>}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Stats Summary */}
-          <aside className="lg:col-span-4 space-y-8">
-            <div className="sketch-card p-8 bg-secondary/10 text-center space-y-4">
-              <h4 className="font-headline font-bold text-2xl text-secondary/60 italic uppercase tracking-widest">True XIRR</h4>
-              <p className="text-7xl font-black font-headline text-secondary">22.4%</p>
-              <p className="text-xl text-primary/60 italic">Beat Benchmark by 4.2%</p>
-            </div>
 
-            <div className="sketch-card p-8 bg-white space-y-8">
-              <h3 className="font-headline font-bold text-3xl mb-8 flex items-center gap-2">
-                <AlertCircle className="text-accent w-8 h-8" />
-                Critical Alerts
-              </h3>
-              <div className="space-y-6">
-                <div className="p-4 bg-accent/5 border-2 border-dashed border-accent/20 rounded-xl">
-                  <p className="font-headline font-bold text-lg text-accent">High Overlap (42%)</p>
-                  <p className="text-sm italic text-primary/70">Axis Bluechip & HDFC Top 100 share 12 stocks.</p>
-                </div>
-                <div className="p-4 bg-tertiary/5 border-2 border-dashed border-tertiary/20 rounded-xl">
-                  <p className="font-headline font-bold text-lg text-tertiary">Expense Ratio Impact</p>
-                  <p className="text-sm italic text-primary/70">You're paying ₹12,400/yr in extra commissions.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="sketch-card p-6 bg-surface border-dashed">
-              <div className="flex gap-3">
-                <Info className="text-secondary shrink-0" />
-                <p className="text-sm italic text-primary/70">
-                  Analysis based on NAV as of yesterday. Benchmark: Nifty 50 TRI.
-                </p>
-              </div>
-            </div>
-          </aside>
-
-          {/* Charts Section */}
-          <article className="lg:col-span-8 space-y-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="sketch-card p-8 bg-white min-h-[400px]">
-                <h4 className="font-headline font-bold text-2xl mb-8">Asset Allocation</h4>
-                <div className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={allocationData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {allocationData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: '2px solid #2d3436', fontFamily: 'Architects Daughter' }}
-                        formatter={(value: number) => [`${value}%`, 'Allocation']}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  {allocationData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2 text-sm font-headline font-bold">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <span>{item.name} ({item.value}%)</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="sketch-card p-8 bg-white min-h-[400px]">
-                <h4 className="font-headline font-bold text-2xl mb-8">Vs Benchmark</h4>
-                <div className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={performanceData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                      <XAxis dataKey="month" stroke="#2d3436" fontStyle="italic" />
-                      <YAxis stroke="#2d3436" tickFormatter={(v) => `${v}%`} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: '2px solid #2d3436', fontFamily: 'Architects Daughter' }}
-                      />
-                      <Bar dataKey="portfolio" fill="#2d3436" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="benchmark" fill="#ff7675" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex justify-center gap-8 mt-8 font-headline font-bold">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary"></div>
-                    <span>Portfolio</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-accent"></div>
-                    <span>Benchmark</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="sketch-card p-12 bg-white relative overflow-hidden">
-              <div className="flex items-center gap-4 mb-12">
-                <Sparkles className="text-secondary w-10 h-10" />
-                <h3 className="font-headline font-black text-4xl text-primary">AI Rebalancing Plan</h3>
-              </div>
-
-              <div className="space-y-12">
-                <div className="flex gap-8">
-                  <div className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center bg-surface shrink-0">
-                    <TrendingUp className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-headline font-bold text-2xl">Switch to Direct Plans</h4>
-                    <p className="text-xl text-primary/70 italic leading-relaxed">You're currently in Regular plans. Switching to Direct will save you ₹1.2L over 10 years.</p>
-                  </div>
-                </div>
-                <div className="flex gap-8">
-                  <div className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center bg-surface shrink-0">
-                    <Shield className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-headline font-bold text-2xl">Consolidate Large Caps</h4>
-                    <p className="text-xl text-primary/70 italic leading-relaxed">Exit Axis Bluechip and move funds to HDFC Top 100 to reduce overlap and improve alpha.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Decorative elements */}
-              <div className="absolute top-10 right-10 opacity-5">
-                <Brain className="w-32 h-32 text-primary" />
-              </div>
-            </div>
-          </article>
+        <div className="sketch-card bg-white space-y-3">
+          <h3 className="font-headline text-xl font-bold">Market Quote (Alpha Vantage)</h3>
+          <input
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
+            className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+          />
+          <button className="sketch-button" onClick={fetchQuote}>Fetch Quote</button>
+          {quoteResult && <pre className="text-xs overflow-auto bg-surface p-3 rounded-xl">{JSON.stringify(quoteResult, null, 2)}</pre>}
         </div>
+      </section>
+
+      {transactions.length > 0 && (
+        <section className="sketch-card bg-white">
+          <h3 className="font-headline text-xl font-bold mb-3">Parsed Transactions ({transactions.length})</h3>
+          <div className="overflow-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th>Scheme</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Units</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.slice(0, 20).map((txn, i) => (
+                  <tr key={`${txn.scheme_code}-${i}`}>
+                    <td>{txn.scheme_name}</td>
+                    <td>{txn.date}</td>
+                    <td>{txn.txn_type}</td>
+                    <td>₹{Math.round(txn.amount).toLocaleString()}</td>
+                    <td>{txn.units}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {result && (
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Portfolio Value</p>
+              <p className="text-3xl font-black">₹{Math.round(result.portfolio_value).toLocaleString()}</p>
+            </div>
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">XIRR</p>
+              <p className="text-3xl font-black">{result.xirr.toFixed(2)}%</p>
+            </div>
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Alpha</p>
+              <p className="text-3xl font-black">{result.benchmark_comparison.alpha_percent.toFixed(2)}%</p>
+            </div>
+          </div>
+
+          <div className="sketch-card bg-white">
+            <h3 className="font-headline text-xl font-bold mb-3">Holdings</h3>
+            <div className="space-y-2">
+              {result.holdings.map((h) => (
+                <div key={h.scheme_code} className="border-2 border-dashed border-primary/20 rounded-xl p-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                  <span>{h.scheme_name}</span>
+                  <span>Units: {h.units}</span>
+                  <span>Value: ₹{Math.round(h.market_value).toLocaleString()}</span>
+                  <span>Weight: {h.weight}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="sketch-card bg-white">
+              <h3 className="font-headline text-xl font-bold mb-3">Overlap</h3>
+              <p>Pairs: {result.overlap_analysis.pair_count}</p>
+              <ul className="list-disc pl-5">
+                {result.overlap_analysis.high_overlap_pairs.slice(0, 5).map((pair, i) => (
+                  <li key={`${pair.fund_a}-${pair.fund_b}-${i}`}>
+                    {pair.fund_a} vs {pair.fund_b}: {pair.similarity_score}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="sketch-card bg-white">
+              <h3 className="font-headline text-xl font-bold mb-3">Expense Drag</h3>
+              <p>Weighted ER: {result.expense_ratio_drag.weighted_expense_ratio_percent.toFixed(2)}%</p>
+              <p>Annual Drag: ₹{Math.round(result.expense_ratio_drag.annual_drag_rupees).toLocaleString()}</p>
+            </div>
+          </div>
+        </section>
       )}
     </div>
   );

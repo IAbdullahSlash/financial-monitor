@@ -1,173 +1,158 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Landmark, FileText, Calculator, TrendingUp, Shield, Brain, ArrowRight, Info, Lightbulb, CheckCircle2, AlertCircle, Upload } from "lucide-react";
+import { financeApi } from "../services/api";
+
+type TaxResponse = {
+  gross_income: number;
+  old_regime_tax: number;
+  new_regime_tax: number;
+  better_regime: string;
+  potential_tax_saving: number;
+  deduction_optimization: Record<string, { remaining_limit: number; max_tax_saving_estimate: number }>;
+  explainability: Record<string, unknown>;
+};
 
 export default function TaxWizard() {
-  const [salary, setSalary] = useState(1200000);
-  const [deductions, setDeductions] = useState(150000);
-  const [isComparing, setIsComparing] = useState(false);
+  const [payload, setPayload] = useState({
+    form16: {
+      basic_salary: 1200000,
+      hra_received: 300000,
+      special_allowance: 150000,
+      other_income: 50000,
+    },
+    deductions: {
+      section_80c: 100000,
+      section_80d: 15000,
+      section_80ccd_1b: 0,
+      home_loan_interest: 0,
+      hra_exemption_claim: 0,
+    },
+    city_type: "metro",
+    rent_paid_annual: 240000,
+  });
+  const [result, setResult] = useState<TaxResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Simplified tax calculation logic
-  const calculateTax = (income: number, ded: number, regime: 'old' | 'new') => {
-    if (regime === 'old') {
-      const taxable = Math.max(0, income - ded - 50000); // Standard deduction
-      if (taxable <= 250000) return 0;
-      if (taxable <= 500000) return (taxable - 250000) * 0.05;
-      if (taxable <= 1000000) return 12500 + (taxable - 500000) * 0.2;
-      return 112500 + (taxable - 1000000) * 0.3;
-    } else {
-      const taxable = Math.max(0, income - 50000); // Standard deduction
-      if (taxable <= 300000) return 0;
-      if (taxable <= 600000) return (taxable - 300000) * 0.05;
-      if (taxable <= 900000) return 15000 + (taxable - 600000) * 0.1;
-      if (taxable <= 1200000) return 45000 + (taxable - 900000) * 0.15;
-      if (taxable <= 1500000) return 90000 + (taxable - 1200000) * 0.2;
-      return 150000 + (taxable - 1500000) * 0.3;
+  const runOptimization = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await financeApi.taxOptimize<TaxResponse>(payload);
+      setResult(response);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to optimize tax");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const oldTax = calculateTax(salary, deductions, 'old');
-  const newTax = calculateTax(salary, deductions, 'new');
-  const savings = Math.abs(oldTax - newTax);
-  const betterRegime = oldTax < newTax ? 'Old Regime' : 'New Regime';
+  const updateForm16 = (key: string, value: number) => {
+    setPayload((prev) => ({ ...prev, form16: { ...prev.form16, [key]: value } }));
+  };
+
+  const updateDeductions = (key: string, value: number) => {
+    setPayload((prev) => ({ ...prev, deductions: { ...prev.deductions, [key]: value } }));
+  };
 
   return (
-    <div className="space-y-12 font-body">
-      <header className="text-center space-y-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight"
-        >
-          <span className="marker-highlight px-6">Tax Wizard</span>
-        </motion.h1>
-        <p className="text-primary/70 text-2xl italic">Smart tax optimization. Maximize your savings.</p>
-      </header>
+    <div className="space-y-8">
+      <h1 className="font-headline text-5xl font-black text-primary">Tax Optimization Wizard</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Input Section */}
-        <aside className="lg:col-span-4 space-y-8">
-          <div className="sketch-card p-8 bg-white space-y-8">
-            <h3 className="font-headline font-bold text-3xl mb-8 flex items-center gap-2">
-              <Calculator className="text-secondary w-8 h-8" />
-              Your Income
-            </h3>
-            
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between font-headline font-bold">
-                  <label>Annual Salary (₹)</label>
-                  <span className="text-secondary">{salary.toLocaleString()}</span>
+      <section className="sketch-card bg-white space-y-4">
+        <h2 className="font-headline text-2xl font-bold">Form 16 Inputs</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(payload.form16).map(([key, value]) => (
+            <label key={key} className="space-y-1">
+              <span className="font-headline text-sm uppercase text-primary/60">{key}</span>
+              <input
+                type="number"
+                value={value}
+                onChange={(e) => updateForm16(key, Number(e.target.value))}
+                className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+              />
+            </label>
+          ))}
+
+          {Object.entries(payload.deductions).map(([key, value]) => (
+            <label key={key} className="space-y-1">
+              <span className="font-headline text-sm uppercase text-primary/60">{key}</span>
+              <input
+                type="number"
+                value={value}
+                onChange={(e) => updateDeductions(key, Number(e.target.value))}
+                className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+              />
+            </label>
+          ))}
+
+          <label className="space-y-1">
+            <span className="font-headline text-sm uppercase text-primary/60">city_type</span>
+            <select
+              value={payload.city_type}
+              onChange={(e) => setPayload((prev) => ({ ...prev, city_type: e.target.value }))}
+              className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+            >
+              <option value="metro">metro</option>
+              <option value="non_metro">non_metro</option>
+            </select>
+          </label>
+
+          <label className="space-y-1">
+            <span className="font-headline text-sm uppercase text-primary/60">rent_paid_annual</span>
+            <input
+              type="number"
+              value={payload.rent_paid_annual}
+              onChange={(e) => setPayload((prev) => ({ ...prev, rent_paid_annual: Number(e.target.value) }))}
+              className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+            />
+          </label>
+        </div>
+
+        <button className="sketch-button bg-primary text-white" onClick={runOptimization} disabled={loading}>
+          {loading ? "Optimizing..." : "Compare Old vs New Regime"}
+        </button>
+        {error && <p className="text-red-600 font-headline">{error}</p>}
+      </section>
+
+      {result && (
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Old Regime Tax</p>
+              <p className="text-3xl font-black">₹{Math.round(result.old_regime_tax).toLocaleString()}</p>
+            </div>
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">New Regime Tax</p>
+              <p className="text-3xl font-black">₹{Math.round(result.new_regime_tax).toLocaleString()}</p>
+            </div>
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Better Regime</p>
+              <p className="text-3xl font-black uppercase">{result.better_regime}</p>
+            </div>
+          </div>
+
+          <div className="sketch-card bg-white">
+            <h3 className="font-headline text-xl font-bold mb-3">Potential Tax Saving</h3>
+            <p className="text-4xl font-black">₹{Math.round(result.potential_tax_saving).toLocaleString()}</p>
+          </div>
+
+          <div className="sketch-card bg-white">
+            <h3 className="font-headline text-xl font-bold mb-3">Deduction Headroom</h3>
+            <div className="space-y-2">
+              {Object.entries(result.deduction_optimization).map(([k, v]) => {
+                const row = v as { remaining_limit: number; max_tax_saving_estimate: number };
+                return (
+                <div key={k} className="border-2 border-dashed border-primary/20 rounded-xl p-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <span className="font-bold">{k}</span>
+                  <span>Remaining: ₹{Math.round(Number(row.remaining_limit)).toLocaleString()}</span>
+                  <span>Tax Save: ₹{Math.round(Number(row.max_tax_saving_estimate)).toLocaleString()}</span>
                 </div>
-                <input 
-                  type="range" 
-                  min={300000} 
-                  max={5000000} 
-                  step={50000}
-                  value={salary}
-                  onChange={(e) => setSalary(parseInt(e.target.value))}
-                  className="w-full accent-primary h-2 bg-primary/10 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between font-headline font-bold">
-                  <label>80C Deductions (₹)</label>
-                  <span className="text-secondary">{deductions.toLocaleString()}</span>
-                </div>
-                <input 
-                  type="range" 
-                  min={0} 
-                  max={150000} 
-                  step={5000}
-                  value={deductions}
-                  onChange={(e) => setDeductions(parseInt(e.target.value))}
-                  className="w-full accent-primary h-2 bg-primary/10 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-            </div>
-
-            <div className="pt-8 border-t-2 border-dashed border-primary/10">
-              <button className="w-full sketch-button py-4 text-2xl font-headline font-black bg-primary text-white hover:bg-primary/90 flex items-center justify-center gap-3">
-                <Upload className="w-6 h-6" />
-                Upload Form 16
-              </button>
-              <p className="text-sm text-center mt-4 text-primary/40 italic font-accent">AI will automatically extract your data.</p>
+                );
+              })}
             </div>
           </div>
-
-          <div className="sketch-card p-6 bg-surface border-dashed">
-            <div className="flex gap-3">
-              <Info className="text-secondary shrink-0" />
-              <p className="text-sm italic text-primary/70">
-                We compare Old vs New regimes based on the latest 2024-25 budget rules.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Results Section */}
-        <article className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="sketch-card p-8 bg-white border-primary">
-              <h4 className="font-headline font-bold text-2xl mb-6 text-primary/60 italic uppercase tracking-widest">Old Regime</h4>
-              <div className="space-y-4">
-                <p className="text-5xl font-black font-headline text-primary">₹{Math.round(oldTax).toLocaleString()}</p>
-                <p className="text-lg text-primary/60 italic">Estimated Annual Tax</p>
-              </div>
-            </div>
-            <div className="sketch-card p-8 bg-white border-secondary">
-              <h4 className="font-headline font-bold text-2xl mb-6 text-secondary/60 italic uppercase tracking-widest">New Regime</h4>
-              <div className="space-y-4">
-                <p className="text-5xl font-black font-headline text-secondary">₹{Math.round(newTax).toLocaleString()}</p>
-                <p className="text-lg text-primary/60 italic">Estimated Annual Tax</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="sketch-card p-12 bg-secondary/10 relative overflow-hidden">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center bg-white">
-                <TrendingUp className="w-8 h-8 text-secondary" />
-              </div>
-              <div>
-                <h3 className="font-headline font-black text-4xl text-primary">Save ₹{savings.toLocaleString()}!</h3>
-                <p className="text-2xl text-primary/70 italic">Switch to the {betterRegime} to maximize your savings.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8">
-              <div className="space-y-6">
-                <h4 className="font-headline font-bold text-2xl flex items-center gap-2">
-                  <CheckCircle2 className="text-secondary" />
-                  Missed Deductions:
-                </h4>
-                <ul className="space-y-4 font-headline italic text-xl">
-                  <li className="flex items-center gap-2">Section 80D (Health Ins): ₹25,000</li>
-                  <li className="flex items-center gap-2">Section 80CCD(1B) (NPS): ₹50,000</li>
-                  <li className="flex items-center gap-2">Section 24 (Home Loan): ₹2,00,000</li>
-                </ul>
-              </div>
-              <div className="space-y-6">
-                <h4 className="font-headline font-bold text-2xl flex items-center gap-2">
-                  <Lightbulb className="text-secondary" />
-                  Wizard's Advice:
-                </h4>
-                <div className="sketch-card p-6 bg-white border-dashed">
-                  <p className="text-lg italic text-primary/80">
-                    "Since your salary is over ₹12L, the New Regime is generally better unless you have home loan interest over ₹2L."
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Decorative elements */}
-            <div className="absolute top-10 right-10 opacity-5">
-              <Brain className="w-32 h-32 text-primary" />
-            </div>
-          </div>
-        </article>
-      </div>
+        </section>
+      )}
     </div>
   );
 }

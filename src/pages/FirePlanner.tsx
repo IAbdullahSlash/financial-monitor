@@ -1,147 +1,188 @@
-import { useState } from "react";
-import { motion } from "motion/react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
-import { Flame, TrendingUp, Shield, Landmark, ArrowRight, Info } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { financeApi } from "../services/api";
+
+type FireGoal = {
+  name: string;
+  target_amount: number;
+  years_to_goal: number;
+};
+
+type FireResponse = {
+  retirement_corpus_required: number;
+  monthly_sip_for_retirement: number;
+  total_monthly_investment_required: number;
+  goals: Array<{ goal_name: string; monthly_sip: number; target_amount: number; allocation: Record<string, number> }>;
+  roadmap: Array<{ month: number; age: number; projected_corpus: number; contribution: number }>;
+  monte_carlo: Record<string, number>;
+  explainability: Record<string, unknown>;
+};
 
 export default function FirePlanner() {
-  const [inputs, setInputs] = useState({
-    age: 25,
-    income: 100000,
-    expenses: 40000,
-    investments: 500000,
-    goalAge: 45,
+  const [payload, setPayload] = useState({
+    age: 28,
+    income_monthly: 120000,
+    expenses_monthly: 50000,
+    inflation: 0.06,
+    expected_return: 0.11,
+    annual_volatility: 0.16,
+    current_assets: 800000,
+    retirement_age: 55,
   });
+  const [goals, setGoals] = useState<FireGoal[]>([
+    { name: "Home Down Payment", target_amount: 3000000, years_to_goal: 7 },
+    { name: "Child Education", target_amount: 5000000, years_to_goal: 15 },
+  ]);
+  const [result, setResult] = useState<FireResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Simple FIRE calculation logic
-  const yearsToGoal = inputs.goalAge - inputs.age;
-  const monthlySavings = inputs.income - inputs.expenses;
-  const annualSavings = monthlySavings * 12;
-  
-  // Projection data
-  const data = Array.from({ length: yearsToGoal + 1 }, (_, i) => {
-    const year = inputs.age + i;
-    // Simplified 10% annual return
-    const corpus = inputs.investments * Math.pow(1.1, i) + annualSavings * ((Math.pow(1.1, i) - 1) / 0.1);
-    return {
-      year,
-      corpus: Math.round(corpus),
-      target: inputs.expenses * 12 * 25, // 25x rule
-    };
-  });
+  const roadmapPreview = useMemo(() => result?.roadmap.slice(0, 120) || [], [result]);
 
-  const finalCorpus = data[data.length - 1].corpus;
-  const targetCorpus = inputs.expenses * 12 * 25;
-  const isOnTrack = finalCorpus >= targetCorpus;
+  const addGoal = () => {
+    setGoals((prev) => [...prev, { name: "New Goal", target_amount: 1000000, years_to_goal: 5 }]);
+  };
+
+  const updateGoal = (index: number, key: keyof FireGoal, value: string) => {
+    setGoals((prev) =>
+      prev.map((goal, idx) =>
+        idx === index
+          ? {
+              ...goal,
+              [key]: key === "name" ? value : Number(value),
+            }
+          : goal
+      )
+    );
+  };
+
+  const runPlan = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await financeApi.firePlan<FireResponse>({ ...payload, goals });
+      setResult(response);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to compute FIRE plan");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="space-y-12 font-body">
-      <header className="text-center space-y-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight"
-        >
-          <span className="marker-highlight px-6">FIRE Path</span>
-        </motion.h1>
-        <p className="text-primary/70 text-2xl italic">Your roadmap to freedom from the 9-to-5.</p>
-      </header>
+    <div className="space-y-8">
+      <h1 className="font-headline text-5xl font-black text-primary">FIRE Path Planner</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Inputs Section */}
-        <aside className="lg:col-span-4 space-y-6">
-          <div className="sketch-card p-8 bg-white">
-            <h3 className="font-headline font-bold text-3xl mb-6 flex items-center gap-2">
-              <Flame className="text-accent w-8 h-8" />
-              Your Numbers
-            </h3>
-            <div className="space-y-6">
-              {[
-                { label: "Current Age", key: "age", min: 18, max: 60 },
-                { label: "Monthly Income (₹)", key: "income", min: 10000, max: 1000000, step: 5000 },
-                { label: "Monthly Expenses (₹)", key: "expenses", min: 5000, max: 500000, step: 5000 },
-                { label: "Existing Investments (₹)", key: "investments", min: 0, max: 10000000, step: 50000 },
-                { label: "Target FIRE Age", key: "goalAge", min: 30, max: 70 },
-              ].map((field) => (
-                <div key={field.key} className="space-y-2">
-                  <div className="flex justify-between font-headline font-bold">
-                    <label>{field.label}</label>
-                    <span className="text-secondary">{inputs[field.key as keyof typeof inputs].toLocaleString()}</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min={field.min} 
-                    max={field.max} 
-                    step={field.step || 1}
-                    value={inputs[field.key as keyof typeof inputs]}
-                    onChange={(e) => setInputs({ ...inputs, [field.key]: parseInt(e.target.value) })}
-                    className="w-full accent-primary h-2 bg-primary/10 rounded-lg appearance-none cursor-pointer"
-                  />
+      <section className="sketch-card bg-white space-y-4">
+        <h2 className="font-headline text-2xl font-bold">Inputs</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(payload).map(([key, value]) => (
+            <label key={key} className="space-y-1">
+              <span className="font-headline text-sm uppercase text-primary/60">{key}</span>
+              <input
+                type="number"
+                value={value}
+                onChange={(e) => setPayload((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+                className="w-full border-2 border-primary/20 rounded-xl px-3 py-2"
+              />
+            </label>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-headline text-xl font-bold">Goals</h3>
+            <button className="sketch-button" onClick={addGoal}>Add Goal</button>
+          </div>
+          {goals.map((goal, index) => (
+            <div key={`${goal.name}-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input
+                value={goal.name}
+                onChange={(e) => updateGoal(index, "name", e.target.value)}
+                className="border-2 border-primary/20 rounded-xl px-3 py-2"
+                placeholder="Goal name"
+              />
+              <input
+                type="number"
+                value={goal.target_amount}
+                onChange={(e) => updateGoal(index, "target_amount", e.target.value)}
+                className="border-2 border-primary/20 rounded-xl px-3 py-2"
+                placeholder="Target amount"
+              />
+              <input
+                type="number"
+                value={goal.years_to_goal}
+                onChange={(e) => updateGoal(index, "years_to_goal", e.target.value)}
+                className="border-2 border-primary/20 rounded-xl px-3 py-2"
+                placeholder="Years"
+              />
+            </div>
+          ))}
+        </div>
+
+        <button className="sketch-button bg-primary text-white" onClick={runPlan} disabled={loading}>
+          {loading ? "Calculating..." : "Generate FIRE Plan"}
+        </button>
+        {error && <p className="text-red-600 font-headline">{error}</p>}
+      </section>
+
+      {result && (
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Retirement Corpus</p>
+              <p className="text-3xl font-black">₹{Math.round(result.retirement_corpus_required).toLocaleString()}</p>
+            </div>
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Monthly SIP (Retirement)</p>
+              <p className="text-3xl font-black">₹{Math.round(result.monthly_sip_for_retirement).toLocaleString()}</p>
+            </div>
+            <div className="sketch-card bg-white">
+              <p className="text-primary/60">Total Monthly Investment</p>
+              <p className="text-3xl font-black">₹{Math.round(result.total_monthly_investment_required).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="sketch-card bg-white">
+            <h3 className="font-headline text-xl font-bold mb-3">Goal SIP Breakdown</h3>
+            <div className="space-y-2">
+              {result.goals.map((goal) => (
+                <div key={goal.goal_name} className="border-2 border-dashed border-primary/20 rounded-xl px-3 py-2 flex justify-between">
+                  <span>{goal.goal_name}</span>
+                  <span className="font-bold">₹{Math.round(goal.monthly_sip).toLocaleString()}/mo</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="sketch-card p-6 bg-surface border-dashed">
-            <div className="flex gap-3">
-              <Info className="text-secondary shrink-0" />
-              <p className="text-sm italic text-primary/70">
-                We use a standard 10% annual return and the "25x Rule" (Corpus = 25 * Annual Expenses) for these projections.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Results Section */}
-        <article className="lg:col-span-8 space-y-8">
-          <div className="sketch-card p-8 bg-white min-h-[500px]">
-            <h3 className="font-headline font-bold text-3xl mb-8">Corpus Projection</h3>
-            <div className="h-[400px] w-full">
+          <div className="sketch-card bg-white">
+            <h3 className="font-headline text-xl font-bold mb-3">Roadmap Projection</h3>
+            <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
-                  <defs>
-                    <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2d3436" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#2d3436" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis dataKey="year" stroke="#2d3436" fontStyle="italic" />
-                  <YAxis 
-                    stroke="#2d3436" 
-                    tickFormatter={(value) => `₹${(value / 100000).toFixed(1)}L`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: '2px solid #2d3436', fontFamily: 'Architects Daughter' }}
-                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Corpus']}
-                  />
-                  <Area type="monotone" dataKey="corpus" stroke="#2d3436" strokeWidth={3} fillOpacity={1} fill="url(#colorCorpus)" />
-                  <Line type="monotone" dataKey="target" stroke="#ff7675" strokeDasharray="5 5" strokeWidth={2} dot={false} />
-                </AreaChart>
+                <LineChart data={roadmapPreview}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(v) => `₹${Math.round(v / 100000)}L`} />
+                  <Tooltip formatter={(v: number) => `₹${Math.round(v).toLocaleString()}`} />
+                  <Line type="monotone" dataKey="projected_corpus" stroke="#2d3436" strokeWidth={3} dot={false} />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className={`sketch-card p-8 ${isOnTrack ? 'bg-secondary/10' : 'bg-accent/10'}`}>
-              <h4 className="font-headline font-bold text-2xl mb-4">The Verdict</h4>
-              <p className="text-xl font-headline">
-                {isOnTrack 
-                  ? "You're on fire! Your current plan leads to financial freedom by age " + inputs.goalAge + "."
-                  : "Almost there! You might need to increase your monthly SIP by ₹" + Math.round((targetCorpus - finalCorpus) / 240).toLocaleString() + " to hit your goal."}
-              </p>
-            </div>
-
-            <div className="sketch-card p-8 bg-white">
-              <h4 className="font-headline font-bold text-2xl mb-4">Action Plan</h4>
-              <ul className="space-y-3 font-headline italic">
-                <li className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-secondary" /> Increase SIP by 10% annually</li>
-                <li className="flex items-center gap-2"><Shield className="w-5 h-5 text-secondary" /> Maintain ₹{Math.round(inputs.expenses * 6).toLocaleString()} Emergency Fund</li>
-                <li className="flex items-center gap-2"><Landmark className="w-5 h-5 text-secondary" /> Maximize 80C & 80D tax benefits</li>
-              </ul>
+          <div className="sketch-card bg-white">
+            <h3 className="font-headline text-xl font-bold mb-3">Monte Carlo (Inflation-adjusted)</h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {Object.entries(result.monte_carlo).map(([k, v]) => (
+                <div key={k} className="border-2 border-dashed border-primary/20 rounded-xl p-3">
+                  <p className="text-primary/60 uppercase text-xs">{k}</p>
+                  <p className="text-lg font-bold">₹{Math.round(Number(v)).toLocaleString()}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </article>
-      </div>
+        </section>
+      )}
     </div>
   );
 }

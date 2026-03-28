@@ -1,6 +1,6 @@
-# FinMentor India — Complete Setup Guide
+# FinTwin — Complete Setup Guide
 
-FinMentor India is a full-stack, AI-powered personal finance mentor for Indian users.
+FinTwin is a full-stack, AI-powered personal finance mentor for Indian users.
 
 - **Frontend:** React + Vite
 - **Backend:** FastAPI + Python

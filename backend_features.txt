@@ -10,14 +10,13 @@ The backend is a modular FastAPI system for Indian personal finance advisory.
 It is designed to be:
 - Agentic (multi-engine, decision-pipeline architecture)
 - Deterministic-first (rules + quantitative finance)
-- ML-augmented (classical ML; no dependency on external LLM APIs)
+- ML-augmented 
 - SaaS-ready (structured API contracts, caching, security utilities)
 
 Core stack:
 - FastAPI + Pydantic v2 (typed API contracts)
 - NumPy/Pandas/SciPy stack for quant calculations
 - scikit-learn for calibrated scoring
-- Optional local LLM (Ollama) only for explanation text
 - Redis cache adapter (with in-memory fallback)
 - PostgreSQL connection config available for persistence integration
 
@@ -271,16 +270,11 @@ Explainability strategy:
 - Feature importance (ML-backed module)
 - Optional local LLM summarization via Ollama (if enabled)
 
-No external LLM dependency:
-- No GPT/Gemini integration required to run core logic
-- Optional local model integration is isolated and fallback-safe
-
 ============================================================
 5) SECURITY, PRIVACY, AND COMPLIANCE POSTURE
 ============================================================
 
 Security utilities currently included:
-- Encryption service: backend/app/core/security.py (Fernet)
 - Cache abstraction: backend/app/core/cache.py (Redis + in-memory fallback)
 - Config-driven environment management: backend/app/core/config.py
 - CORS controls configured in backend startup

@@ -232,21 +232,7 @@ Date format should be ISO (`YYYY-MM-DD`).
 
 - Current app has fallbacks for cache and can run without active DB wiring for core calculations
 
----
-
-## 12) Production notes
-
-Before production deployment, add:
-
-- JWT auth + role-based access
-- Tenant isolation and audit logs
-- Managed Redis/PostgreSQL
-- Secret management (do not keep keys in plaintext env files)
-- CI/CD + automated tests
-
----
-
-## 13) Additional docs
+## 12) Additional docs
 
 Detailed backend capabilities are documented in:
 

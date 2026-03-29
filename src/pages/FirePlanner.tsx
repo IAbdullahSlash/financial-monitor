@@ -71,7 +71,17 @@ export default function FirePlanner() {
 
   return (
     <div className="space-y-8">
-      <h1 className="font-headline text-5xl font-black text-primary">FIRE Path Planner</h1>
+      <header className="space-y-3">
+        <h1 className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight">
+          <span className="marker-highlight px-6">FIRE Path Planner</span>
+        </h1>
+        <p className="text-primary/70 italic text-lg">Set your lifestyle assumptions, define life goals, and generate a contribution roadmap.</p>
+        <div className="flex flex-wrap gap-2">
+          <span className="status-chip">Step 1: Income and expenses</span>
+          <span className="status-chip">Step 2: Goal setup</span>
+          <span className="status-chip">Step 3: Review roadmap</span>
+        </div>
+      </header>
 
       <section className="sketch-card bg-white space-y-4">
         <h2 className="font-headline text-2xl font-bold">Inputs</h2>
@@ -120,9 +130,11 @@ export default function FirePlanner() {
           ))}
         </div>
 
-        <button className="sketch-button bg-primary text-white" onClick={runPlan} disabled={loading}>
-          {loading ? "Calculating..." : "Generate FIRE Plan"}
-        </button>
+        <div className="sticky bottom-4 z-20 pt-2">
+          <button className="sketch-button bg-primary text-white w-full md:w-auto" onClick={runPlan} disabled={loading}>
+            {loading ? "Calculating..." : "Generate FIRE Plan"}
+          </button>
+        </div>
         {error && <p className="text-red-600 font-headline">{error}</p>}
       </section>
 

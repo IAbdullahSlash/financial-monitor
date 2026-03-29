@@ -25,9 +25,9 @@ export default function Invest() {
           <motion.h1 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="font-headline text-5xl font-black text-primary tracking-tight"
+            className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight"
           >
-            <span className="marker-highlight px-4">Invest & Grow</span>
+            <span className="marker-highlight px-6">Invest & Grow</span>
           </motion.h1>
           <p className="text-primary/70 italic text-2xl mt-2">Your portfolio is up 12.4% this year. Keep it up!</p>
         </div>

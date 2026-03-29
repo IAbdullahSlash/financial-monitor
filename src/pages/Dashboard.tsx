@@ -1,6 +1,17 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { RefreshCw, Activity, Wallet, ShieldCheck, Landmark, Users, Sparkles, AlertCircle } from "lucide-react";
+import {
+  RefreshCw,
+  Activity,
+  Sparkles,
+  TrendingUp,
+  Gauge,
+  BarChart3,
+  HeartPulse,
+  Coins,
+  Lightbulb,
+  ChevronRight,
+} from "lucide-react";
 import { financeApi } from "../services/api";
 
 type FireResponse = {
@@ -154,19 +165,45 @@ export default function Dashboard() {
   }, [data.health, data.life]);
 
   const availableModules = Object.values(data).filter(Boolean).length;
+  const hasSnapshot = availableModules > 0;
+  const errorCount = Object.keys(errors).length;
+  const reliabilityPercent = Math.round((availableModules / 5) * 100);
+  const healthScore = data.health ? Math.round(data.health.score) : null;
+  const monthlySip = data.fire ? Math.round(data.fire.total_monthly_investment_required) : null;
+  const fireCorpus = data.fire ? Math.round(data.fire.retirement_corpus_required) : null;
+  const taxSaving = data.tax ? Math.round(data.tax.potential_tax_saving) : null;
+  const couplesCombinedTax = data.couples
+    ? Math.round(Number(data.couples.joint_tax_outcome?.combined_tax_after_optimization || 0))
+    : null;
+
+  const formatRupees = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return "--";
+    return `₹${Math.round(value).toLocaleString()}`;
+  };
 
   return (
     <div className="space-y-10 font-body">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="space-y-3">
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-headline text-5xl font-black text-primary"
+            className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight"
           >
-            Live Finance Dashboard
+            <span className="marker-highlight px-6">Live Finance Dashboard</span>
           </motion.h1>
           <p className="text-primary/70 italic text-lg">Aggregated real-time outputs from FIRE, Health, Tax, Couples, and Life Event engines.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="status-chip">
+              <Activity className="w-4 h-4" />
+              {loading ? "Syncing modules" : "Live monitor"}
+            </span>
+            <span className="status-chip">
+              <Gauge className="w-4 h-4" />
+              Reliability {reliabilityPercent}%
+            </span>
+            <span className="status-chip">Last refresh: {lastRefreshed || "Not yet"}</span>
+          </div>
         </div>
 
         <button
@@ -179,108 +216,178 @@ export default function Dashboard() {
         </button>
       </header>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="sketch-card bg-white">
-          <p className="text-primary/60 text-sm">Modules Online</p>
-          <p className="text-3xl font-black">{availableModules}/5</p>
-          <div className="mt-2 flex items-center gap-2 text-primary/70 text-sm"><Activity className="w-4 h-4" /> Live aggregation status</div>
-        </div>
+      {loading && !hasSnapshot && (
+        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-5">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="sketch-card bg-white space-y-3">
+              <div className="skeleton-line w-1/2"></div>
+              <div className="skeleton-block"></div>
+              <div className="skeleton-line w-3/4"></div>
+            </div>
+          ))}
+        </section>
+      )}
 
-        <div className="sketch-card bg-white">
-          <p className="text-primary/60 text-sm">Health Score</p>
-          <p className="text-3xl font-black">{data.health ? Math.round(data.health.score) : "--"}</p>
-          <div className="mt-2 flex items-center gap-2 text-primary/70 text-sm"><ShieldCheck className="w-4 h-4" /> Money health</div>
-        </div>
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <article className="xl:col-span-7 sketch-card bg-gradient-to-br from-sky-100/75 via-white to-cyan-100/60 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="font-headline text-4xl font-black text-primary">Today Snapshot</h2>
+              <p className="text-primary/70">Your daily money pulse in one glance.</p>
+            </div>
+            <span className="status-chip">
+              <Activity className="w-4 h-4" />
+              {loading ? "Sync in progress" : "Live data state"}
+            </span>
+          </div>
 
-        <div className="sketch-card bg-white">
-          <p className="text-primary/60 text-sm">Monthly FIRE SIP</p>
-          <p className="text-3xl font-black">{data.fire ? `₹${Math.round(data.fire.total_monthly_investment_required).toLocaleString()}` : "--"}</p>
-          <div className="mt-2 flex items-center gap-2 text-primary/70 text-sm"><Wallet className="w-4 h-4" /> Total monthly required</div>
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-2xl border-2 border-primary/20 bg-white/80 p-4">
+              <p className="text-sm text-primary/60">Modules Online</p>
+              <p className="text-3xl font-black">{availableModules}/5</p>
+            </div>
+            <div className="rounded-2xl border-2 border-primary/20 bg-white/80 p-4">
+              <p className="text-sm text-primary/60">Reliability</p>
+              <p className="text-3xl font-black">{reliabilityPercent}%</p>
+            </div>
+            <div className="rounded-2xl border-2 border-primary/20 bg-white/80 p-4">
+              <p className="text-sm text-primary/60">Active Alerts</p>
+              <p className="text-3xl font-black">{errorCount}</p>
+            </div>
+          </div>
 
-        <div className="sketch-card bg-white">
-          <p className="text-primary/60 text-sm">Best Tax Regime</p>
-          <p className="text-3xl font-black uppercase">{data.tax ? data.tax.better_regime : "--"}</p>
-          <div className="mt-2 flex items-center gap-2 text-primary/70 text-sm"><Landmark className="w-4 h-4" /> Old vs new optimization</div>
-        </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-primary/70">
+              <span>Coverage Progress</span>
+              <span>{reliabilityPercent}%</span>
+            </div>
+            <div className="h-3 w-full rounded-full bg-white/80 border-2 border-primary/20 overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(reliabilityPercent, 100)}%` }}
+                transition={{ duration: 0.7 }}
+                className="h-full bg-gradient-to-r from-secondary via-accent to-tertiary"
+              />
+            </div>
+          </div>
+        </article>
 
-        <div className="sketch-card bg-white">
-          <p className="text-primary/60 text-sm">Couples Combined Tax</p>
-          <p className="text-3xl font-black">
-            {data.couples
-              ? `₹${Math.round(Number(data.couples.joint_tax_outcome?.combined_tax_after_optimization || 0)).toLocaleString()}`
-              : "--"}
-          </p>
-          <div className="mt-2 flex items-center gap-2 text-primary/70 text-sm"><Users className="w-4 h-4" /> Joint optimization</div>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="sketch-card bg-white space-y-3">
-          <h2 className="font-headline text-2xl font-bold flex items-center gap-2">
+        <aside className="xl:col-span-5 sketch-card bg-gradient-to-br from-amber-100/80 via-white to-orange-100/65 space-y-4">
+          <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-secondary" />
-            Key Recommendations
-          </h2>
-          {topRecommendations.length === 0 ? (
-            <p className="text-primary/60">No recommendation data yet. Click “Refresh Live Outputs”.</p>
-          ) : (
-            <ul className="list-disc pl-5 space-y-2">
-              {topRecommendations.map((rec, idx) => (
-                <li key={`${rec}-${idx}`}>{rec}</li>
-              ))}
-            </ul>
-          )}
-        </div>
+            <h2 className="font-headline text-3xl font-black">Advisor Highlights</h2>
+          </div>
 
-        <div className="sketch-card bg-white space-y-3">
-          <h2 className="font-headline text-2xl font-bold flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-accent" />
-            Module Errors
-          </h2>
-          {Object.keys(errors).length === 0 ? (
-            <p className="text-primary/60">No module errors.</p>
+          {topRecommendations.length === 0 ? (
+            <div className="rounded-2xl border-2 border-dashed border-primary/25 bg-white/80 p-4 space-y-3">
+              <p className="text-primary/65">No recommendations yet. Generate one refresh for personalized highlights.</p>
+              <button className="sketch-button" onClick={refreshDashboard} disabled={loading}>
+                {loading ? "Loading advice..." : "Load Insights"}
+              </button>
+            </div>
           ) : (
             <div className="space-y-2">
-              {Object.entries(errors).map(([module, msg]) => (
-                <div key={module} className="border-2 border-dashed border-accent/40 rounded-xl p-2">
-                  <p className="font-bold uppercase text-sm">{module}</p>
-                  <p className="text-sm">{msg}</p>
+              {topRecommendations.slice(0, 3).map((rec, idx) => (
+                <div key={`${rec}-${idx}`} className="rounded-xl border-2 border-primary/20 bg-white/85 px-3 py-2 flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 mt-0.5 text-secondary shrink-0" />
+                  <p className="text-sm text-primary/85">{rec}</p>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      </section>
 
-      <section className="sketch-card bg-white">
-        <h2 className="font-headline text-2xl font-bold mb-3">Snapshot Details</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="border-2 border-dashed border-primary/20 rounded-xl p-3">
-            <p className="font-bold mb-1">FIRE</p>
-            <p>Retirement Corpus: {data.fire ? `₹${Math.round(data.fire.retirement_corpus_required).toLocaleString()}` : "--"}</p>
-            <p>Goals: {data.fire?.goals?.length ?? 0}</p>
+          <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-white/80 p-3">
+            {errorCount === 0 ? (
+              <p className="text-sm text-primary/70">No service issues in the latest run.</p>
+            ) : (
+              <p className="text-sm text-primary/80">{errorCount} module alert(s) detected. Use refresh to retry.</p>
+            )}
+          </div>
+        </aside>
+
+        <article className="xl:col-span-4 sketch-card bg-gradient-to-br from-emerald-100/80 via-white to-teal-100/65 space-y-3">
+          <div className="flex items-center gap-2">
+            <HeartPulse className="w-5 h-5 text-secondary" />
+            <h3 className="font-headline text-2xl font-black">Health & Safety</h3>
+          </div>
+          <p className="text-4xl font-black">{healthScore ?? "--"}</p>
+          <p className="text-primary/70 text-sm">Health score and recommendation confidence.</p>
+          <div className="rounded-xl border-2 border-primary/20 bg-white/80 p-3 text-sm flex items-center justify-between">
+            <span>Top advice</span>
+            <span className="font-bold">{topRecommendations.length}</span>
+          </div>
+        </article>
+
+        <article className="xl:col-span-4 sketch-card bg-gradient-to-br from-sky-100/80 via-white to-indigo-100/65 space-y-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-secondary" />
+            <h3 className="font-headline text-2xl font-black">Growth Engine</h3>
+          </div>
+          <p className="text-3xl font-black">{formatRupees(monthlySip)}</p>
+          <p className="text-primary/70 text-sm">Monthly SIP target toward your FIRE plan.</p>
+          <div className="rounded-xl border-2 border-primary/20 bg-white/80 p-3 text-sm flex items-center justify-between">
+            <span>Corpus target</span>
+            <span className="font-bold">{formatRupees(fireCorpus)}</span>
+          </div>
+        </article>
+
+        <article className="xl:col-span-4 sketch-card bg-gradient-to-br from-rose-100/80 via-white to-orange-100/65 space-y-3">
+          <div className="flex items-center gap-2">
+            <Coins className="w-5 h-5 text-tertiary" />
+            <h3 className="font-headline text-2xl font-black">Tax & Family</h3>
+          </div>
+          <p className="text-3xl font-black">{formatRupees(taxSaving)}</p>
+          <p className="text-primary/70 text-sm">Potential annual tax efficiency from current inputs.</p>
+          <div className="rounded-xl border-2 border-primary/20 bg-white/80 p-3 text-sm flex items-center justify-between">
+            <span>Couples combined tax</span>
+            <span className="font-bold">{formatRupees(couplesCombinedTax)}</span>
+          </div>
+        </article>
+
+        <section className="xl:col-span-12 sketch-card bg-white">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-secondary" />
+              <h2 className="font-headline text-2xl font-black">Compact Snapshot</h2>
+            </div>
+            <button className="text-primary/70 hover:text-secondary flex items-center gap-1 font-headline text-lg" onClick={refreshDashboard}>
+              Refresh details
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
-          <div className="border-2 border-dashed border-primary/20 rounded-xl p-3">
-            <p className="font-bold mb-1">Tax</p>
-            <p>Old: {data.tax ? `₹${Math.round(data.tax.old_regime_tax).toLocaleString()}` : "--"}</p>
-            <p>New: {data.tax ? `₹${Math.round(data.tax.new_regime_tax).toLocaleString()}` : "--"}</p>
-            <p>Savings: {data.tax ? `₹${Math.round(data.tax.potential_tax_saving).toLocaleString()}` : "--"}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="rounded-xl border-2 border-dashed border-primary/20 bg-surface/70 p-3 space-y-1">
+              <p className="font-bold">FIRE</p>
+              <p>Retirement corpus: {formatRupees(fireCorpus)}</p>
+              <p>Goals tracked: {data.fire?.goals?.length ?? 0}</p>
+            </div>
+
+            <div className="rounded-xl border-2 border-dashed border-primary/20 bg-surface/70 p-3 space-y-1">
+              <p className="font-bold">Tax</p>
+              <p>Old regime: {formatRupees(data.tax?.old_regime_tax)}</p>
+              <p>New regime: {formatRupees(data.tax?.new_regime_tax)}</p>
+              <p>Best regime: {data.tax?.better_regime?.toUpperCase() || "--"}</p>
+            </div>
+
+            <div className="rounded-xl border-2 border-dashed border-primary/20 bg-surface/70 p-3 space-y-1">
+              <p className="font-bold">Couples + Advisor</p>
+              <p>
+                Suggested P1 split: {formatRupees(
+                  data.couples ? Number(data.couples.recommended_split?.partner1_80c_investment || 0) : null
+                )}
+              </p>
+              <p>
+                Suggested P2 split: {formatRupees(
+                  data.couples ? Number(data.couples.recommended_split?.partner2_80c_investment || 0) : null
+                )}
+              </p>
+              <p>Advisor recommendations: {data.life?.recommendations?.length ?? 0}</p>
+            </div>
           </div>
 
-          <div className="border-2 border-dashed border-primary/20 rounded-xl p-3">
-            <p className="font-bold mb-1">Couples + Life</p>
-            <p>
-              Split P1: {data.couples ? `₹${Math.round(Number(data.couples.recommended_split?.partner1_80c_investment || 0)).toLocaleString()}` : "--"}
-            </p>
-            <p>
-              Split P2: {data.couples ? `₹${Math.round(Number(data.couples.recommended_split?.partner2_80c_investment || 0)).toLocaleString()}` : "--"}
-            </p>
-            <p>Life recos: {data.life?.recommendations?.length ?? 0}</p>
-          </div>
-        </div>
-
-        <p className="text-xs text-primary/50 mt-4">Last refreshed: {lastRefreshed || "Never"}</p>
+          <p className="text-xs text-primary/50 mt-4">Last refreshed: {lastRefreshed || "Never"}</p>
+        </section>
       </section>
     </div>
   );

@@ -17,9 +17,9 @@ export default function Planner() {
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-headline text-6xl font-black text-primary tracking-tight"
+          className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight"
         >
-          <span className="marker-highlight px-4">Wealth Planner</span>
+          <span className="marker-highlight px-6">Wealth Planner</span>
         </motion.h1>
         <p className="text-primary/70 italic text-2xl">Design your future, one rupee at a time.</p>
       </header>

@@ -43,7 +43,9 @@ export default function HealthScore() {
 
   return (
     <div className="space-y-8">
-      <h1 className="font-headline text-5xl font-black text-primary">Money Health Score</h1>
+      <h1 className="font-headline text-6xl md:text-8xl font-black text-primary tracking-tight">
+        <span className="marker-highlight px-6">Money Health Score</span>
+      </h1>
 
       <section className="sketch-card bg-white space-y-4">
         <h2 className="font-headline text-2xl font-bold">Financial Profile Inputs</h2>

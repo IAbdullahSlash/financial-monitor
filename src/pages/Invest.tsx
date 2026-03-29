@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Rocket, Shield, Landmark, ArrowUpRight, ArrowDownRight, Info, Plus } from "lucide-react";
@@ -9,15 +10,58 @@ const portfolioData = [
   { name: 'Cash', value: 32000, color: '#55efc4' },
 ];
 
-const marketData = [
-  { name: 'Mon', value: 24500 },
-  { name: 'Tue', value: 24650 },
-  { name: 'Wed', value: 24400 },
-  { name: 'Thu', value: 24800 },
-  { name: 'Fri', value: 25100 },
-];
+type TimeRange = '1D' | '1W' | '1M' | '1Y' | 'ALL';
+
+type MarketPoint = {
+  name: string;
+  value: number;
+};
+
+const marketDataByRange: Record<TimeRange, MarketPoint[]> = {
+  '1D': [
+    { name: '9 AM', value: 24820 },
+    { name: '11 AM', value: 24910 },
+    { name: '1 PM', value: 24870 },
+    { name: '3 PM', value: 25010 },
+    { name: 'Close', value: 25100 },
+  ],
+  '1W': [
+    { name: 'Mon', value: 24500 },
+    { name: 'Tue', value: 24650 },
+    { name: 'Wed', value: 24400 },
+    { name: 'Thu', value: 24800 },
+    { name: 'Fri', value: 25100 },
+  ],
+  '1M': [
+    { name: 'W1', value: 23600 },
+    { name: 'W2', value: 24120 },
+    { name: 'W3', value: 24610 },
+    { name: 'W4', value: 25100 },
+  ],
+  '1Y': [
+    { name: 'Jan', value: 19850 },
+    { name: 'Mar', value: 20520 },
+    { name: 'May', value: 21480 },
+    { name: 'Jul', value: 22310 },
+    { name: 'Sep', value: 23420 },
+    { name: 'Nov', value: 24400 },
+    { name: 'Now', value: 25100 },
+  ],
+  'ALL': [
+    { name: '2020', value: 11200 },
+    { name: '2021', value: 14650 },
+    { name: '2022', value: 17120 },
+    { name: '2023', value: 20580 },
+    { name: '2024', value: 23140 },
+    { name: '2025', value: 25100 },
+  ],
+};
 
 export default function Invest() {
+  const [selectedRange, setSelectedRange] = useState<TimeRange>('1Y');
+
+  const selectedMarketData = useMemo(() => marketDataByRange[selectedRange], [selectedRange]);
+
   return (
     <div className="space-y-12 font-body">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -45,14 +89,22 @@ export default function Invest() {
           <div className="flex justify-between items-center">
             <h3 className="font-headline font-bold text-3xl">Portfolio Performance</h3>
             <div className="flex gap-2">
-              {['1D', '1W', '1M', '1Y', 'ALL'].map((period) => (
-                <button key={period} className={`px-4 py-1 border-2 border-primary font-headline text-lg ${period === '1Y' ? 'bg-accent text-primary' : 'bg-white text-primary hover:bg-surface'}`}>{period}</button>
+              {(['1D', '1W', '1M', '1Y', 'ALL'] as TimeRange[]).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedRange(period)}
+                  className={`px-4 py-1 border-2 border-primary font-headline text-lg transition-colors ${
+                    period === selectedRange ? 'bg-accent text-primary' : 'bg-white text-primary hover:bg-surface'
+                  }`}
+                >
+                  {period}
+                </button>
               ))}
             </div>
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={marketData}>
+              <AreaChart data={selectedMarketData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#fdcb6e" stopOpacity={0.3}/>

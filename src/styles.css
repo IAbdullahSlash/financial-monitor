@@ -1,0 +1,217 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-marker: var(--marker);
+  --color-coral: var(--coral);
+  --color-mint: var(--mint);
+  --color-sky: var(--sky);
+  --color-butter: var(--butter);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-headline: "Archivo Black", "Inter", sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-hand: "Kalam", "Caveat", cursive;
+
+  --shadow-sketch: 4px 4px 0 0 var(--ink);
+  --shadow-sketch-sm: 2px 2px 0 0 var(--ink);
+  --shadow-sketch-lg: 6px 6px 0 0 var(--ink);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  --paper: oklch(0.985 0.008 90);
+  --ink: oklch(0.22 0.02 260);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+
+  --card: oklch(1 0 0);
+  --card-foreground: var(--ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--ink);
+
+  --primary: var(--ink);
+  --primary-foreground: oklch(0.985 0.008 90);
+  --secondary: oklch(0.95 0.02 90);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.95 0.01 260);
+  --muted-foreground: oklch(0.45 0.02 260);
+  --accent: oklch(0.92 0.14 92);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.66 0.2 25);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --border: var(--ink);
+  --input: oklch(0.9 0.01 260);
+  --ring: var(--ink);
+
+  --marker: oklch(0.92 0.18 95);
+  --coral: oklch(0.78 0.15 25);
+  --mint: oklch(0.85 0.12 165);
+  --sky: oklch(0.83 0.09 235);
+  --butter: oklch(0.94 0.11 95);
+
+  --chart-1: oklch(0.22 0.02 260);
+  --chart-2: oklch(0.78 0.15 25);
+  --chart-3: oklch(0.72 0.14 165);
+  --chart-4: oklch(0.7 0.12 235);
+  --chart-5: oklch(0.82 0.15 90);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    background-image:
+      radial-gradient(oklch(0.85 0.02 90 / 0.35) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-headline);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility sketch-card {
+  background-color: var(--color-card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sketch);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+@utility sketch-card-hover {
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-sketch-lg);
+  }
+}
+@utility sketch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  background-color: var(--ink);
+  color: var(--primary-foreground);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-xl);
+  font-weight: 700;
+  box-shadow: var(--shadow-sketch-sm);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  cursor: pointer;
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-sketch);
+  }
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+}
+@utility sketch-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--color-card);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  box-shadow: var(--shadow-sketch-sm);
+  cursor: pointer;
+  transition: transform 150ms ease;
+  &:hover { transform: translate(-1px, -1px); }
+}
+@utility sketch-input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background-color: var(--color-card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-xl);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  outline: none;
+  transition: box-shadow 150ms ease;
+  &:focus {
+    box-shadow: var(--shadow-sketch-sm);
+  }
+}
+@utility dashed-card {
+  background-color: var(--color-card);
+  border: 2px dashed var(--ink);
+  border-radius: var(--radius-2xl);
+}
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background-color: var(--color-card);
+}
+@utility mini-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+}
+@utility marker-hl {
+  background-image: linear-gradient(120deg, var(--marker) 0%, var(--marker) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 42%;
+  background-position: 0 82%;
+  padding: 0 0.15em;
+}
+@utility hand {
+  font-family: var(--font-hand);
+}

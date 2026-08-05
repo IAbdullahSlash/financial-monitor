@@ -7,9 +7,9 @@ import { ArrowRight, Compass, LineChart, PiggyBank, Sparkles } from "lucide-reac
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fin Twin — Simulate any money decision" },
+      { title: "Fin Twin" },
       { name: "description", content: "Before you buy, borrow or quit — run it through your Fin Twin. Simulate any financial decision in seconds." },
-      { property: "og:title", content: "Fin Twin — Simulate any money decision" },
+      { property: "og:title", content: "Fin Twin" },
       { property: "og:description", content: "Try 'Buy an iPhone', 'Move to Bengaluru', 'Quit my job'. See if your future self approves." },
     ],
   }),
@@ -22,9 +22,6 @@ function Home() {
     <PageShell>
       <section className="grid gap-8 lg:grid-cols-[1.15fr_1fr] items-start">
         <div className="animate-fade-in">
-          <div className="chip bg-butter mb-4">
-            <Sparkles className="h-3.5 w-3.5" /> V1 · Beta · Made in India
-          </div>
           <h1 className="font-headline text-5xl md:text-6xl lg:text-7xl leading-[0.95]">
             What <Marker>financial decision</Marker> are you thinking about today?
           </h1>
@@ -41,7 +38,7 @@ function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/dashboard" className="sketch-btn">
+<Link to="/register" className="sketch-btn">
               See my dashboard <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/profile" className="sketch-btn-ghost">

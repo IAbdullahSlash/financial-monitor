@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, TrendingUp, ShieldAlert, XCircle, Save } from "lucide-react";
 import { SketchCard, StatusChip, SectionLabel, Marker } from "./ui";
 import { simulateDecision, inr } from "@/lib/fintwin-data";
@@ -15,6 +15,7 @@ const verdictMap = {
 
 export function SimulatorCard({ compact = false }: { compact?: boolean }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [decision, setDecision] = useState("Buy an iPhone 16 Pro");
   const [amount, setAmount] = useState(140000);
   const [months, setMonths] = useState(6);
@@ -22,8 +23,8 @@ export function SimulatorCard({ compact = false }: { compact?: boolean }) {
   const result = useMemo(() => simulateDecision(amount, months), [amount, months]);
   const V = verdictMap[result.verdict];
 
-  async function saveRun() {
-    if (!user) return toast.error("Sign in to save runs");
+async function saveRun() {
+    if (!user) return navigate({ to: "/register" });
     setSaving(true);
     const { error } = await supabase.from("decision_simulations").insert({
       user_id: user.id,
@@ -94,8 +95,8 @@ export function SimulatorCard({ compact = false }: { compact?: boolean }) {
           </button>
           {!compact && (
             <>
-              <span className="mini-label ml-2">Want a full plan?</span>
-              <Link to="/dashboard" className="sketch-btn text-sm">
+<span className="mini-label ml-2">Want a full plan?</span>
+              <Link to="/register" className="sketch-btn text-sm">
                 Open dashboard <ArrowRight className="h-4 w-4" />
               </Link>
             </>

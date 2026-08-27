@@ -1,17 +1,24 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
+import type { FirebaseOptions } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Firebase web configuration is intentionally public. Access is protected by
-// Firebase Authentication and the Firestore rules in the repository.
-const firebaseConfig = {
-  apiKey: "AIzaSyD9x0he5yg0M12Z4MF8R0siypPpboo05xs",
-  authDomain: "financial-monitor-d2d9c.firebaseapp.com",
-  projectId: "financial-monitor-d2d9c",
-  storageBucket: "financial-monitor-d2d9c.firebasestorage.app",
-  messagingSenderId: "1034488919259",
-  appId: "1:1034488919259:web:5a990bef8a5618c81fc8fe",
-  measurementId: "G-8W98K9Y5J2",
+function requiredEnv(name: string): string {
+  const value = import.meta.env[name];
+  if (!value) throw new Error(`Missing required Firebase environment variable: ${name}`);
+  return value;
+}
+
+// These values are browser configuration, not server secrets. Authentication
+// and Firestore rules enforce access control.
+const firebaseConfig: FirebaseOptions = {
+  apiKey: requiredEnv("VITE_FIREBASE_API_KEY"),
+  authDomain: requiredEnv("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: requiredEnv("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: requiredEnv("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: requiredEnv("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: requiredEnv("VITE_FIREBASE_APP_ID"),
+  measurementId: requiredEnv("VITE_FIREBASE_MEASUREMENT_ID"),
 };
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);

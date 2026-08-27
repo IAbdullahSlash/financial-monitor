@@ -72,9 +72,12 @@ export function GoalTimelineChart() {
 }
 
 export function ProjectionChart() {
+  // Keep render output identical on the server and client. Random chart values
+  // cause React hydration to fail because each render produces different SVG.
+  const savedOffsets = [0, 1200, 700, 1600, 900, 1400, 600, 1800, 1100, 1500, 800, 1700];
   const data = Array.from({ length: 12 }, (_, i) => ({
     m: `M${i + 1}`,
-    saved: 210000 + i * 15000 + Math.round(Math.random() * 2000),
+    saved: 210000 + i * 15000 + savedOffsets[i],
     target: 210000 + i * 20000,
   }));
   return (

@@ -3,7 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, TrendingUp, ShieldAlert, XCircle, Save } from "lucide-react";
 import { SketchCard, StatusChip, SectionLabel, Marker } from "./ui";
 import { simulateDecision, inr } from "@/lib/fintwin-data";
-import { supabase } from "@/integrations/supabase/client";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -26,14 +27,18 @@ export function SimulatorCard({ compact = false }: { compact?: boolean }) {
 async function saveRun() {
     if (!user) return navigate({ to: "/register" });
     setSaving(true);
-    const { error } = await supabase.from("decision_simulations").insert({
-      user_id: user.id,
+    try {
+      await addDoc(collection(db, "users", user.uid, "decision_simulations"), {
       prompt: decision,
       inputs: { amount, months },
-      result: JSON.parse(JSON.stringify(result)),
-    });
-    setSaving(false);
-    if (error) return toast.error(error.message);
+        result: JSON.parse(JSON.stringify(result)),
+        created_at: serverTimestamp(),
+      });
+    } catch (err) {
+      return toast.error(err instanceof Error ? err.message : "Unable to save simulation.");
+    } finally {
+      setSaving(false);
+    }
     toast.success("Saved to history");
   }
 

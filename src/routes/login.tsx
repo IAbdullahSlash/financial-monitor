@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell, SketchCard, SectionLabel, Marker, DashedCard } from "@/components/fintwin/ui";
 import { ArrowRight, Mail, Lock, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -27,13 +28,14 @@ function LoginPage() {
     e.preventDefault();
     setError(null);
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to log in.");
+    } finally {
+      setBusy(false);
     }
-    navigate({ to: "/dashboard" });
   };
 
   return (

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { PageShell, SectionLabel, Marker, SketchCard, StatusChip } from "@/components/fintwin/ui";
 import { inr, lifeEvents } from "@/lib/fintwin-data";
 import { Sparkles, Save } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -26,15 +27,19 @@ function Life() {
   async function save(e: typeof lifeEvents[number]) {
     if (!user) return toast.error("Sign in to save scenarios");
     setSavingId(e.id);
-    const { error } = await supabase.from("life_simulations").insert({
-      user_id: user.id,
+    try {
+      await addDoc(collection(db, "users", user.uid, "life_simulations"), {
       event_type: e.id,
       title: e.title,
       inputs: { cost: e.cost, monthly: e.monthly },
-      result: { feasible: e.feasible },
-    });
-    setSavingId(null);
-    if (error) return toast.error(error.message);
+        result: { feasible: e.feasible },
+        created_at: serverTimestamp(),
+      });
+    } catch (err) {
+      return toast.error(err instanceof Error ? err.message : "Unable to save scenario.");
+    } finally {
+      setSavingId(null);
+    }
     toast.success("Scenario saved");
   }
 

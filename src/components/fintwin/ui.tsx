@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 import { Menu, X, Compass, LayoutDashboard, User, Target, HeartPulse, PieChart, Receipt, Sparkles, Play, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
 
 const nav = [
   { to: "/", label: "Simulator", icon: Play },
@@ -56,7 +57,7 @@ function AuthHeaderActions() {
         <span className="hand text-sm hidden md:inline text-muted-foreground truncate max-w-[160px]">{user.email}</span>
         <Link to="/dashboard" className="sketch-btn text-sm">Dashboard</Link>
         <button
-          onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/" }); }}
+          onClick={async () => { await signOut(auth); navigate({ to: "/" }); }}
           className="sketch-btn-ghost text-sm"
           aria-label="Sign out"
         >

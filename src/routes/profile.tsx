@@ -3,7 +3,8 @@ import { PageShell, SketchCard, SectionLabel, Marker, DashedCard, StatusChip } f
 import { profile as demoProfile } from "@/lib/fintwin-data";
 import { useEffect, useState } from "react";
 import { Upload, Save } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/profile")({
@@ -56,13 +57,10 @@ function Profile() {
       return;
     }
     (async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (error) setError(error.message);
-      if (data) {
+      try {
+        const snapshot = await getDoc(doc(db, "profiles", user.uid));
+        const data = snapshot.data();
+        if (data) {
         setForm({
           full_name: data.full_name ?? "",
           age: data.age ?? "",
@@ -77,8 +75,12 @@ function Profile() {
           goal_2: data.goal_2 ?? "",
           goal_3: data.goal_3 ?? "",
         });
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unable to load your profile.");
+      } finally {
+        setFetching(false);
       }
-      setFetching(false);
     })();
   }, [user, loading, navigate]);
 
@@ -90,7 +92,6 @@ function Profile() {
     setError(null);
     setBusy(true);
     const payload = {
-      id: user.id,
       full_name: form.full_name || null,
       age: form.age === "" ? null : Number(form.age),
       city: form.city || null,
@@ -104,9 +105,14 @@ function Profile() {
       goal_2: form.goal_2 || null,
       goal_3: form.goal_3 || null,
     };
-    const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
-    setBusy(false);
-    if (error) { setError(error.message); return; }
+    try {
+      await setDoc(doc(db, "profiles", user.uid), payload, { merge: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save your profile.");
+      return;
+    } finally {
+      setBusy(false);
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };

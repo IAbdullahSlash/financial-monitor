@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell, SketchCard, SectionLabel, Marker, DashedCard } from "@/components/fintwin/ui";
 import { ArrowRight, Mail, Lock, User, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -26,20 +27,15 @@ function RegisterPage() {
     e.preventDefault();
     setError(null);
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/profile`,
-        data: { full_name: form.name },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      await updateProfile(credential.user, { displayName: form.name });
+      navigate({ to: "/profile" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create your account.");
+    } finally {
+      setBusy(false);
     }
-    navigate({ to: "/profile" });
   };
 
   return (

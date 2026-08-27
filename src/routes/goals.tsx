@@ -4,7 +4,8 @@ import { PageShell, SectionLabel, Marker, SketchCard, StatusChip } from "@/compo
 import { goals as mockGoals, inr } from "@/lib/fintwin-data";
 import { ProjectionChart } from "@/components/fintwin/charts";
 import { Plus, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -37,32 +38,38 @@ function Goals() {
 
   useEffect(() => {
     if (!user) { setRows(null); return; }
-    supabase.from("goals").select("*").order("created_at", { ascending: false }).then(({ data }) => {
-      setRows((data as DBGoal[]) ?? []);
-    });
+    getDocs(query(collection(db, "users", user.uid, "goals"), orderBy("created_at", "desc")))
+      .then((snapshot) => setRows(snapshot.docs.map((goal) => ({ id: goal.id, ...goal.data() })) as DBGoal[]));
   }, [user]);
 
   async function addGoal(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    const { data, error } = await supabase.from("goals").insert({
-      user_id: user.id,
+    try {
+      const reference = await addDoc(collection(db, "users", user.uid, "goals"), {
       name: form.name,
       category: form.category,
       target_amount: form.target_amount,
       saved_amount: form.saved_amount,
-      target_date: form.target_date || null,
-    }).select().single();
-    if (error) return toast.error(error.message);
-    setRows((r) => [data as DBGoal, ...(r ?? [])]);
+        target_date: form.target_date || null,
+        created_at: serverTimestamp(),
+      });
+      setRows((r) => [{ id: reference.id, ...form, target_date: form.target_date || null } as DBGoal, ...(r ?? [])]);
+    } catch (err) {
+      return toast.error(err instanceof Error ? err.message : "Unable to save goal.");
+    }
     setOpen(false);
     setForm({ name: "", target_amount: 0, saved_amount: 0, target_date: "", category: "🎯" });
     toast.success("Goal saved");
   }
 
   async function removeGoal(id: string) {
-    const { error } = await supabase.from("goals").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "goals", id));
+    } catch (err) {
+      return toast.error(err instanceof Error ? err.message : "Unable to delete goal.");
+    }
     setRows((r) => (r ?? []).filter((g) => g.id !== id));
   }
 

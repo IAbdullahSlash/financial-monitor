@@ -30,7 +30,8 @@ function newRegime(income: number) {
   return Math.round(t);
 }
 function oldRegime(income: number, deductions: number) {
-  const taxable = Math.max(0, income - 50000 - deductions);
+  // ₹75k standard deduction for salaried (FY 25-26); illustrative for this mock calc
+  const taxable = Math.max(0, income - 75000 - deductions);
   let t = 0;
   const slabs = [[250000, 0], [250000, 0.05], [500000, 0.2], [Infinity, 0.3]] as const;
   let remaining = taxable;

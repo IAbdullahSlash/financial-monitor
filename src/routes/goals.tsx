@@ -168,6 +168,7 @@ function Goals() {
 function monthsUntil(date: string) {
   const d = new Date(date);
   const now = new Date();
+  if (isNaN(d.getTime())) return 999;
   return Math.max(1, (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth()));
 }
 

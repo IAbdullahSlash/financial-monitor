@@ -1,32 +1,35 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
-import { Menu, X, Compass, LayoutDashboard, User, Target, HeartPulse, PieChart, Receipt, Sparkles, Play, LogOut } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Menu,
+  X,
+  Compass,
+  User,
+  LogOut,
+  LayoutDashboard,
+  PlusCircle,
+  Rocket,
+  Settings,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
 
 const nav = [
-  { to: "/", label: "Simulator", icon: Play },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/profile", label: "Profile", icon: User },
-  { to: "/goals", label: "Goals", icon: Target },
-  { to: "/health", label: "Health", icon: HeartPulse },
-  { to: "/portfolio", label: "Portfolio", icon: PieChart },
-  { to: "/tax", label: "Tax", icon: Receipt },
-  { to: "/life", label: "Life", icon: Sparkles },
-];
+  { to: "/", label: "My loans", icon: LayoutDashboard },
+  { to: "/loans/new", label: "Add a loan", icon: PlusCircle },
+  { to: "/plan", label: "Get out faster", icon: Rocket },
+  { to: "/settings", label: "Settings", icon: Settings },
+] as const;
 
 export function NavBar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   return (
     <header className="sticky top-0 z-40 border-b-2 border-ink bg-paper/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenSidebar}
-            className="sketch-btn-ghost !p-2"
-            aria-label="Open menu"
-          >
+          <button onClick={onOpenSidebar} className="sketch-btn-ghost !p-2" aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
           <Link to="/" className="flex items-center gap-2">
@@ -35,7 +38,7 @@ export function NavBar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             </div>
             <div className="leading-tight">
               <div className="font-headline text-lg">Fin Twin</div>
-              <div className="hand text-xs text-muted-foreground -mt-1">your money co-pilot</div>
+              <div className="hand text-xs text-muted-foreground -mt-1">EMI & loan tracker</div>
             </div>
           </Link>
         </div>
@@ -47,20 +50,28 @@ export function NavBar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   );
 }
 
+function useSignOut() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  return async () => {
+    await signOut(auth);
+    // Drop the previous user's cached profile and goals.
+    queryClient.clear();
+    navigate({ to: "/" });
+  };
+}
+
 function AuthHeaderActions() {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const handleSignOut = useSignOut();
   if (loading) return null;
   if (user) {
     return (
       <>
-        <span className="hand text-sm hidden md:inline text-muted-foreground truncate max-w-[160px]">{user.email}</span>
-        <Link to="/dashboard" className="sketch-btn text-sm">Dashboard</Link>
-        <button
-          onClick={async () => { await signOut(auth); navigate({ to: "/" }); }}
-          className="sketch-btn-ghost text-sm"
-          aria-label="Sign out"
-        >
+        <span className="hand text-sm hidden md:inline text-muted-foreground truncate max-w-[160px]">
+          {user.email}
+        </span>
+        <button onClick={handleSignOut} className="sketch-btn-ghost text-sm" aria-label="Sign out">
           <LogOut className="h-4 w-4" /> Sign out
         </button>
       </>
@@ -68,13 +79,23 @@ function AuthHeaderActions() {
   }
   return (
     <>
-      <Link to="/login" className="sketch-btn-ghost text-sm hidden sm:inline-flex">Login / Register</Link>
-      <Link to="/register" className="sketch-btn text-sm">Get Started</Link>
+      <Link to="/login" className="sketch-btn-ghost text-sm">
+        Log in
+      </Link>
+      <Link to="/register" className="sketch-btn text-sm hidden sm:inline-flex">
+        Sync across devices
+      </Link>
     </>
   );
 }
 
+const sideLink =
+  "flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-foreground/80 hover:bg-secondary hover:border-ink";
+const sideLinkActive = "bg-ink text-primary-foreground border-ink";
+
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { user } = useAuth();
+  const handleSignOut = useSignOut();
   return (
     <>
       {open && (
@@ -87,7 +108,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       <aside
         className={cn(
           "fixed top-0 left-0 z-50 h-full w-72 bg-paper border-r-2 border-ink shadow-[6px_0_0_0_var(--ink)] transition-transform duration-300",
-          open ? "translate-x-0" : "-translate-x-full"
+          open ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b-2 border-ink">
@@ -110,34 +131,52 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
               activeOptions={{ exact: n.to === "/" }}
               onClick={onClose}
               className="flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-foreground/80 hover:bg-secondary hover:border-ink"
-              activeProps={{ className: "bg-ink text-primary-foreground border-ink hover:bg-ink hover:text-primary-foreground" }}
+              activeProps={{
+                className:
+                  "bg-ink text-primary-foreground border-ink hover:bg-ink hover:text-primary-foreground",
+              }}
             >
               <n.icon className="h-4 w-4" />
               {n.label}
             </Link>
           ))}
           <div className="mini-label px-3 pt-4 pb-1">Account</div>
-          <Link
-            to="/login"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-foreground/80 hover:bg-secondary hover:border-ink"
-            activeProps={{ className: "bg-ink text-primary-foreground border-ink" }}
-          >
-            <User className="h-4 w-4" />
-            Login
-          </Link>
-          <Link
-            to="/register"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-foreground/80 hover:bg-secondary hover:border-ink"
-            activeProps={{ className: "bg-ink text-primary-foreground border-ink" }}
-          >
-            <Compass className="h-4 w-4" />
-            Register
-          </Link>
+          {user ? (
+            <button
+              onClick={() => {
+                onClose();
+                void handleSignOut();
+              }}
+              className={sideLink}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                onClick={onClose}
+                className={sideLink}
+                activeProps={{ className: sideLinkActive }}
+              >
+                <User className="h-4 w-4" />
+                Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className={sideLink}
+                activeProps={{ className: sideLinkActive }}
+              >
+                <Compass className="h-4 w-4" />
+                Register
+              </Link>
+            </>
+          )}
         </nav>
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t-2 border-ink bg-butter">
-          <div className="hand text-sm">made with pencils, not APIs</div>
+          <div className="hand text-sm">no bank connection, ever</div>
           <div className="mini-label mt-1">Fin Twin © 2026</div>
         </div>
       </aside>
@@ -151,10 +190,12 @@ export function PageShell({ children, className }: { children: ReactNode; classN
     <div className="min-h-screen">
       <NavBar onOpenSidebar={() => setOpen(true)} />
       <Sidebar open={open} onClose={() => setOpen(false)} />
-      <main className={cn("mx-auto max-w-7xl px-6 py-10 animate-fade-in", className)}>{children}</main>
+      <main className={cn("mx-auto max-w-7xl px-6 py-10 animate-fade-in", className)}>
+        {children}
+      </main>
       <footer className="border-t-2 border-ink py-8 mt-16">
         <div className="mx-auto max-w-7xl px-6 flex items-center justify-between text-sm">
-          <span className="hand text-base">made with pencils, not APIs · V1</span>
+          <span className="hand text-base">no bank connection, ever · your numbers stay yours</span>
           <span className="mini-label">Fin Twin © 2026</span>
         </div>
       </footer>
@@ -196,10 +237,12 @@ export function SketchCard({
   children: ReactNode;
   className?: string;
   hoverable?: boolean;
-  as?: any;
+  as?: "div" | "section" | "article" | "li";
 }) {
   return (
-    <Tag className={cn("sketch-card p-6", hoverable && "sketch-card-hover", className)}>{children}</Tag>
+    <Tag className={cn("sketch-card p-6", hoverable && "sketch-card-hover", className)}>
+      {children}
+    </Tag>
   );
 }
 

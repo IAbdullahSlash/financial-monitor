@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import icon from "../media/icon.png?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Toaster } from "@/components/ui/sonner";
+import { useMoveLocalDataOnSignIn } from "@/hooks/use-loans";
 
 function NotFoundComponent() {
   return (
@@ -78,20 +80,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Fin Twin — Your Money Co-Pilot" },
-      { name: "description", content: "Simulate any financial decision before you make it. Cash flow, goals, health score, tax and life events — one honest, sketchy dashboard." },
+      { title: "Fin Twin — EMI & Loan Tracker" },
+      {
+        name: "description",
+        content:
+          "Track every EMI and loan in one place. See what you've paid, what's left, and how to be debt-free sooner. No bank connection needed.",
+      },
       { name: "author", content: "Fin Twin" },
-      { property: "og:title", content: "Fin Twin — Your Money Co-Pilot" },
-      { property: "og:description", content: "What financial decision are you thinking about today?" },
+      { property: "og:title", content: "Fin Twin — EMI & Loan Tracker" },
+      {
+        property: "og:description",
+        content: "See your debt-free date — and how to reach it sooner.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-links: [
+    links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: icon, type: "image/png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Kalam:wght@400;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Kalam:wght@400;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -119,8 +131,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <LocalDataMover />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="bottom-right" />
     </QueryClientProvider>
   );
+}
+
+// Needs the query client, so it lives inside the provider.
+function LocalDataMover() {
+  useMoveLocalDataOnSignIn();
+  return null;
 }

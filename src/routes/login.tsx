@@ -4,14 +4,18 @@ import { PageShell, SketchCard, SectionLabel, Marker, DashedCard } from "@/compo
 import { ArrowRight, Mail, Lock, Sparkles } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
+import { friendlyError } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Login — Fin Twin" },
-      { name: "description", content: "Log back into your Fin Twin to keep simulating money decisions with confidence." },
+      {
+        name: "description",
+        content: "Log in to see your loans and EMIs on any device.",
+      },
       { property: "og:title", content: "Login — Fin Twin" },
-      { property: "og:description", content: "Welcome back to your money co-pilot." },
+      { property: "og:description", content: "Your EMIs, paid and remaining, at a glance." },
     ],
   }),
   component: LoginPage,
@@ -30,9 +34,9 @@ function LoginPage() {
     setBusy(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to log in.");
+      setError(friendlyError(err, "Unable to log in. Please try again."));
     } finally {
       setBusy(false);
     }
@@ -49,11 +53,13 @@ function LoginPage() {
             Log in to your <Marker>Fin Twin</Marker>.
           </h1>
           <p className="hand text-xl mt-5 text-foreground/80 max-w-md">
-            Your future self is waiting with a very strong opinion.
+            Your loans, synced to every device you log in from.
           </p>
           <DashedCard className="mt-8 hidden lg:block">
             <SectionLabel>Zero pressure</SectionLabel>
-            <p className="text-sm">No bank connections. No screen-scraping. Just you and your money brain, together.</p>
+            <p className="text-sm">
+              No bank connection, ever. You type in your loans; we do the maths.
+            </p>
           </DashedCard>
         </div>
 
@@ -62,7 +68,9 @@ function LoginPage() {
           <h2 className="font-headline text-2xl">Enter your details</h2>
           <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4">
             <label className="block">
-              <span className="mini-label flex items-center gap-1"><Mail className="h-3 w-3" /> Email</span>
+              <span className="mini-label flex items-center gap-1">
+                <Mail className="h-3 w-3" /> Email
+              </span>
               <input
                 type="email"
                 required
@@ -73,7 +81,9 @@ function LoginPage() {
               />
             </label>
             <label className="block">
-              <span className="mini-label flex items-center gap-1"><Lock className="h-3 w-3" /> Password</span>
+              <span className="mini-label flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Password
+              </span>
               <input
                 type="password"
                 required
@@ -84,13 +94,19 @@ function LoginPage() {
               />
             </label>
             {error && <div className="chip bg-coral text-white text-xs">{error}</div>}
-            <button type="submit" disabled={busy} className="sketch-btn mt-2 w-full justify-center disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={busy}
+              className="sketch-btn mt-2 w-full justify-center disabled:opacity-60"
+            >
               {busy ? "Logging in..." : "Log in"} <ArrowRight className="h-4 w-4" />
             </button>
           </form>
           <div className="mt-5 text-center text-sm">
             New here?{" "}
-            <Link to="/register" className="hand text-base underline">Create an account</Link>
+            <Link to="/register" className="hand text-base underline">
+              Create an account
+            </Link>
           </div>
         </SketchCard>
       </div>

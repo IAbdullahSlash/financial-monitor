@@ -18,7 +18,8 @@ const firebaseConfig: FirebaseOptions = {
   storageBucket: requiredEnv("VITE_FIREBASE_STORAGE_BUCKET"),
   messagingSenderId: requiredEnv("VITE_FIREBASE_MESSAGING_SENDER_ID"),
   appId: requiredEnv("VITE_FIREBASE_APP_ID"),
-  measurementId: requiredEnv("VITE_FIREBASE_MEASUREMENT_ID"),
+  // Optional: only needed for Google Analytics.
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || undefined,
 };
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -29,7 +30,7 @@ export const db = getFirestore(firebaseApp);
 if (typeof window !== "undefined") {
   void import("firebase/analytics")
     .then(async ({ getAnalytics, isSupported }) => {
-      if (await isSupported()) getAnalytics(firebaseApp);
+      if (firebaseConfig.measurementId && (await isSupported())) getAnalytics(firebaseApp);
     })
     .catch(() => undefined);
 }

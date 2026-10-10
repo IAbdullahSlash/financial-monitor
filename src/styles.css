@@ -105,11 +105,12 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-body);
-    background-image:
-      radial-gradient(oklch(0.85 0.02 90 / 0.35) 1px, transparent 1px);
+    background-image: radial-gradient(oklch(0.85 0.02 90 / 0.35) 1px, transparent 1px);
     background-size: 22px 22px;
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-headline);
     letter-spacing: -0.02em;
   }
@@ -120,7 +121,9 @@
   border: 2px solid var(--ink);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-sketch);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
 }
 @utility sketch-card-hover {
   &:hover {
@@ -140,7 +143,9 @@
   border-radius: var(--radius-xl);
   font-weight: 700;
   box-shadow: var(--shadow-sketch-sm);
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
   cursor: pointer;
   &:hover {
     transform: translate(-1px, -1px);
@@ -164,7 +169,9 @@
   box-shadow: var(--shadow-sketch-sm);
   cursor: pointer;
   transition: transform 150ms ease;
-  &:hover { transform: translate(-1px, -1px); }
+  &:hover {
+    transform: translate(-1px, -1px);
+  }
 }
 @utility sketch-input {
   width: 100%;

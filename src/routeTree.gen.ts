@@ -10,41 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as GoalsRouteImport } from './routes/goals'
-import { Route as HealthRouteImport } from './routes/health'
-import { Route as LifeRouteImport } from './routes/life'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as PortfolioRouteImport } from './routes/portfolio'
-import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PlanRouteImport } from './routes/plan'
 import { Route as RegisterRouteImport } from './routes/register'
-import { Route as SimulatorRouteImport } from './routes/simulator'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as TaxRouteImport } from './routes/tax'
+import { Route as LoansIdRouteImport } from './routes/loans.$id'
+import { Route as LoansNewRouteImport } from './routes/loans.new'
+import { Route as LoansIdEditRouteImport } from './routes/loans.$id_.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GoalsRoute = GoalsRouteImport.update({
-  id: '/goals',
-  path: '/goals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LifeRoute = LifeRouteImport.update({
-  id: '/life',
-  path: '/life',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -52,14 +29,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PortfolioRoute = PortfolioRouteImport.update({
-  id: '/portfolio',
-  path: '/portfolio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -67,9 +39,9 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SimulatorRoute = SimulatorRouteImport.update({
-  id: '/simulator',
-  path: '/simulator',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -77,113 +49,102 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TaxRoute = TaxRouteImport.update({
-  id: '/tax',
-  path: '/tax',
+const LoansIdRoute = LoansIdRouteImport.update({
+  id: '/loans/$id',
+  path: '/loans/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoansNewRoute = LoansNewRouteImport.update({
+  id: '/loans/new',
+  path: '/loans/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoansIdEditRoute = LoansIdEditRouteImport.update({
+  id: '/loans/$id_/edit',
+  path: '/loans/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/goals': typeof GoalsRoute
-  '/health': typeof HealthRoute
-  '/life': typeof LifeRoute
   '/login': typeof LoginRoute
-  '/portfolio': typeof PortfolioRoute
-  '/profile': typeof ProfileRoute
+  '/plan': typeof PlanRoute
   '/register': typeof RegisterRoute
-  '/simulator': typeof SimulatorRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tax': typeof TaxRoute
+  '/loans/$id': typeof LoansIdRoute
+  '/loans/new': typeof LoansNewRoute
+  '/loans/$id/edit': typeof LoansIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/goals': typeof GoalsRoute
-  '/health': typeof HealthRoute
-  '/life': typeof LifeRoute
   '/login': typeof LoginRoute
-  '/portfolio': typeof PortfolioRoute
-  '/profile': typeof ProfileRoute
+  '/plan': typeof PlanRoute
   '/register': typeof RegisterRoute
-  '/simulator': typeof SimulatorRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tax': typeof TaxRoute
+  '/loans/$id': typeof LoansIdRoute
+  '/loans/new': typeof LoansNewRoute
+  '/loans/$id/edit': typeof LoansIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/goals': typeof GoalsRoute
-  '/health': typeof HealthRoute
-  '/life': typeof LifeRoute
   '/login': typeof LoginRoute
-  '/portfolio': typeof PortfolioRoute
-  '/profile': typeof ProfileRoute
+  '/plan': typeof PlanRoute
   '/register': typeof RegisterRoute
-  '/simulator': typeof SimulatorRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tax': typeof TaxRoute
+  '/loans/$id': typeof LoansIdRoute
+  '/loans/new': typeof LoansNewRoute
+  '/loans/$id_/edit': typeof LoansIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
-    | '/goals'
-    | '/health'
-    | '/life'
     | '/login'
-    | '/portfolio'
-    | '/profile'
+    | '/plan'
     | '/register'
-    | '/simulator'
+    | '/settings'
     | '/sitemap.xml'
-    | '/tax'
+    | '/loans/$id'
+    | '/loans/new'
+    | '/loans/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
-    | '/goals'
-    | '/health'
-    | '/life'
     | '/login'
-    | '/portfolio'
-    | '/profile'
+    | '/plan'
     | '/register'
-    | '/simulator'
+    | '/settings'
     | '/sitemap.xml'
-    | '/tax'
+    | '/loans/$id'
+    | '/loans/new'
+    | '/loans/$id/edit'
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
-    | '/goals'
-    | '/health'
-    | '/life'
     | '/login'
-    | '/portfolio'
-    | '/profile'
+    | '/plan'
     | '/register'
-    | '/simulator'
+    | '/settings'
     | '/sitemap.xml'
-    | '/tax'
+    | '/loans/$id'
+    | '/loans/new'
+    | '/loans/$id_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
-  GoalsRoute: typeof GoalsRoute
-  HealthRoute: typeof HealthRoute
-  LifeRoute: typeof LifeRoute
   LoginRoute: typeof LoginRoute
-  PortfolioRoute: typeof PortfolioRoute
-  ProfileRoute: typeof ProfileRoute
+  PlanRoute: typeof PlanRoute
   RegisterRoute: typeof RegisterRoute
-  SimulatorRoute: typeof SimulatorRoute
+  SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  TaxRoute: typeof TaxRoute
+  LoansIdRoute: typeof LoansIdRoute
+  LoansNewRoute: typeof LoansNewRoute
+  LoansIdEditRoute: typeof LoansIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -195,34 +156,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/goals': {
-      id: '/goals'
-      path: '/goals'
-      fullPath: '/goals'
-      preLoaderRoute: typeof GoalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/life': {
-      id: '/life'
-      path: '/life'
-      fullPath: '/life'
-      preLoaderRoute: typeof LifeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -230,18 +163,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/portfolio': {
-      id: '/portfolio'
-      path: '/portfolio'
-      fullPath: '/portfolio'
-      preLoaderRoute: typeof PortfolioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -251,11 +177,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/simulator': {
-      id: '/simulator'
-      path: '/simulator'
-      fullPath: '/simulator'
-      preLoaderRoute: typeof SimulatorRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -265,11 +191,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tax': {
-      id: '/tax'
-      path: '/tax'
-      fullPath: '/tax'
-      preLoaderRoute: typeof TaxRouteImport
+    '/loans/$id': {
+      id: '/loans/$id'
+      path: '/loans/$id'
+      fullPath: '/loans/$id'
+      preLoaderRoute: typeof LoansIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loans/new': {
+      id: '/loans/new'
+      path: '/loans/new'
+      fullPath: '/loans/new'
+      preLoaderRoute: typeof LoansNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loans/$id_/edit': {
+      id: '/loans/$id_/edit'
+      path: '/loans/$id/edit'
+      fullPath: '/loans/$id/edit'
+      preLoaderRoute: typeof LoansIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -277,17 +217,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
-  GoalsRoute: GoalsRoute,
-  HealthRoute: HealthRoute,
-  LifeRoute: LifeRoute,
   LoginRoute: LoginRoute,
-  PortfolioRoute: PortfolioRoute,
-  ProfileRoute: ProfileRoute,
+  PlanRoute: PlanRoute,
   RegisterRoute: RegisterRoute,
-  SimulatorRoute: SimulatorRoute,
+  SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  TaxRoute: TaxRoute,
+  LoansIdRoute: LoansIdRoute,
+  LoansNewRoute: LoansNewRoute,
+  LoansIdEditRoute: LoansIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

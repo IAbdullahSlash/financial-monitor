@@ -4,14 +4,21 @@ import { PageShell, SketchCard, SectionLabel, Marker, DashedCard } from "@/compo
 import { ArrowRight, Mail, Lock, User, Sparkles } from "lucide-react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
+import { friendlyError } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
       { title: "Register — Fin Twin" },
-      { name: "description", content: "Create your Fin Twin account and start simulating money decisions in under a minute." },
+      {
+        name: "description",
+        content: "Create a free account to keep your loan tracker synced across devices.",
+      },
       { property: "og:title", content: "Register — Fin Twin" },
-      { property: "og:description", content: "Meet your money co-pilot. Zero bank connections required." },
+      {
+        property: "og:description",
+        content: "Track every EMI. No bank connection required.",
+      },
     ],
   }),
   component: RegisterPage,
@@ -30,9 +37,9 @@ function RegisterPage() {
     try {
       const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(credential.user, { displayName: form.name });
-      navigate({ to: "/profile" });
+      navigate({ to: "/" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to create your account.");
+      setError(friendlyError(err, "Unable to create your account. Please try again."));
     } finally {
       setBusy(false);
     }
@@ -49,14 +56,15 @@ function RegisterPage() {
             Meet your <Marker>Fin Twin</Marker>.
           </h1>
           <p className="hand text-xl mt-5 text-foreground/80 max-w-md">
-            Answer a few questions, get an honest picture, and start simulating decisions immediately.
+            An account is optional — it just keeps your loans synced across devices. Anything you
+            added on this device moves in automatically.
           </p>
           <DashedCard className="mt-8 hidden lg:block">
             <SectionLabel>What you get</SectionLabel>
             <ul className="text-sm space-y-1 mt-1">
-              <li>· Decision simulator</li>
-              <li>· Money health score</li>
-              <li>· Goal & life event planning</li>
+              <li>· Your loans on every device</li>
+              <li>· Paid vs remaining for every EMI</li>
+              <li>· Your debt-free date, and how to reach it sooner</li>
             </ul>
           </DashedCard>
         </div>
@@ -66,7 +74,9 @@ function RegisterPage() {
           <h2 className="font-headline text-2xl">Let's get you set up</h2>
           <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4">
             <label className="block">
-              <span className="mini-label flex items-center gap-1"><User className="h-3 w-3" /> Name</span>
+              <span className="mini-label flex items-center gap-1">
+                <User className="h-3 w-3" /> Name
+              </span>
               <input
                 required
                 value={form.name}
@@ -76,7 +86,9 @@ function RegisterPage() {
               />
             </label>
             <label className="block">
-              <span className="mini-label flex items-center gap-1"><Mail className="h-3 w-3" /> Email</span>
+              <span className="mini-label flex items-center gap-1">
+                <Mail className="h-3 w-3" /> Email
+              </span>
               <input
                 type="email"
                 required
@@ -87,7 +99,9 @@ function RegisterPage() {
               />
             </label>
             <label className="block">
-              <span className="mini-label flex items-center gap-1"><Lock className="h-3 w-3" /> Password</span>
+              <span className="mini-label flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Password
+              </span>
               <input
                 type="password"
                 required
@@ -98,18 +112,23 @@ function RegisterPage() {
                 className="sketch-input mt-1"
               />
             </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" required className="h-4 w-4 mt-0.5 border-2 border-ink" />
-              <span>I agree to the vibes — no spam, no shady stuff.</span>
-            </label>
+            <p className="text-xs text-muted-foreground">
+              No spam. We only store the loan numbers you type in.
+            </p>
             {error && <div className="chip bg-coral text-white text-xs">{error}</div>}
-            <button type="submit" disabled={busy} className="sketch-btn mt-2 w-full justify-center disabled:opacity-60">
-              {busy ? "Creating..." : "Create my Fin Twin"} <ArrowRight className="h-4 w-4" />
+            <button
+              type="submit"
+              disabled={busy}
+              className="sketch-btn mt-2 w-full justify-center disabled:opacity-60"
+            >
+              {busy ? "Creating..." : "Create account"} <ArrowRight className="h-4 w-4" />
             </button>
           </form>
           <div className="mt-5 text-center text-sm">
             Already have an account?{" "}
-            <Link to="/login" className="hand text-base underline">Log in</Link>
+            <Link to="/login" className="hand text-base underline">
+              Log in
+            </Link>
           </div>
         </SketchCard>
       </div>

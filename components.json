@@ -18,5 +18,7 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "registries": {}
+  "registries": {
+    "@neobrutalism": "https://neobrutalism.dev/r/{name}.json"
+  }
 }

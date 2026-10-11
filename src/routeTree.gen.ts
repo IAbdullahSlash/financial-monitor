@@ -11,10 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as PlanRouteImport } from './routes/plan'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as WhatIfRouteImport } from './routes/what-if'
 import { Route as LoansIdRouteImport } from './routes/loans.$id'
 import { Route as LoansNewRouteImport } from './routes/loans.new'
 import { Route as LoansIdEditRouteImport } from './routes/loans.$id_.edit'
@@ -29,11 +30,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -44,9 +40,19 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WhatIfRoute = WhatIfRouteImport.update({
+  id: '/what-if',
+  path: '/what-if',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoansIdRoute = LoansIdRouteImport.update({
@@ -68,10 +74,11 @@ const LoansIdEditRoute = LoansIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/plan': typeof PlanRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/what-if': typeof WhatIfRoute
   '/loans/$id': typeof LoansIdRoute
   '/loans/new': typeof LoansNewRoute
   '/loans/$id/edit': typeof LoansIdEditRoute
@@ -79,10 +86,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/plan': typeof PlanRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/what-if': typeof WhatIfRoute
   '/loans/$id': typeof LoansIdRoute
   '/loans/new': typeof LoansNewRoute
   '/loans/$id/edit': typeof LoansIdEditRoute
@@ -91,10 +99,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/plan': typeof PlanRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/what-if': typeof WhatIfRoute
   '/loans/$id': typeof LoansIdRoute
   '/loans/new': typeof LoansNewRoute
   '/loans/$id_/edit': typeof LoansIdEditRoute
@@ -104,10 +113,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/plan'
     | '/register'
     | '/settings'
+    | '/setup'
     | '/sitemap.xml'
+    | '/what-if'
     | '/loans/$id'
     | '/loans/new'
     | '/loans/$id/edit'
@@ -115,10 +125,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/plan'
     | '/register'
     | '/settings'
+    | '/setup'
     | '/sitemap.xml'
+    | '/what-if'
     | '/loans/$id'
     | '/loans/new'
     | '/loans/$id/edit'
@@ -126,10 +137,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/login'
-    | '/plan'
     | '/register'
     | '/settings'
+    | '/setup'
     | '/sitemap.xml'
+    | '/what-if'
     | '/loans/$id'
     | '/loans/new'
     | '/loans/$id_/edit'
@@ -138,10 +150,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
-  PlanRoute: typeof PlanRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
+  SetupRoute: typeof SetupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  WhatIfRoute: typeof WhatIfRoute
   LoansIdRoute: typeof LoansIdRoute
   LoansNewRoute: typeof LoansNewRoute
   LoansIdEditRoute: typeof LoansIdEditRoute
@@ -163,13 +176,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan': {
-      id: '/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -184,11 +190,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/what-if': {
+      id: '/what-if'
+      path: '/what-if'
+      fullPath: '/what-if'
+      preLoaderRoute: typeof WhatIfRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/loans/$id': {
@@ -218,10 +238,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
-  PlanRoute: PlanRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
+  SetupRoute: SetupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  WhatIfRoute: WhatIfRoute,
   LoansIdRoute: LoansIdRoute,
   LoansNewRoute: LoansNewRoute,
   LoansIdEditRoute: LoansIdEditRoute,

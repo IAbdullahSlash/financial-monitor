@@ -39,7 +39,7 @@ export function emiCalendar(loan: Loan, today = new Date()): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Fin Twin//EMI tracker//EN",
+    "PRODID:-//Fin Twin//EMI reminders//EN",
     "CALSCALE:GREGORIAN",
     ...events,
     "END:VCALENDAR",

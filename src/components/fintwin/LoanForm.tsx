@@ -1,5 +1,19 @@
-import { useMemo, useState } from "react";
-import { SketchCard, SectionLabel, StatusChip } from "@/components/fintwin/ui";
+import { useId, useMemo, useState } from "react";
+import { AlertCircle } from "lucide-react";
+import { ToneBadge } from "@/components/fintwin/ui";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   calcEmi,
   loanKinds,
@@ -11,8 +25,7 @@ import {
   type LoanKind,
 } from "@/lib/loans";
 import { duration, inrFull, monthYear } from "@/lib/format";
-import { newId } from "@/hooks/use-loans";
-import { cn } from "@/lib/utils";
+import { newId } from "@/hooks/use-store";
 
 type Mode = "original" | "remaining";
 
@@ -132,200 +145,238 @@ export function LoanForm({
     if (result.loan) onSubmit(result.loan);
   }
 
+  const originalFields = (
+    <div className="grid gap-5 md:grid-cols-2">
+      <Field label="Amount borrowed (₹)">
+        {(id) => (
+          <Input
+            id={id}
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={d.principal}
+            placeholder="2500000"
+            onChange={(e) => set("principal", e.target.value)}
+          />
+        )}
+      </Field>
+      <RateField d={d} set={set} />
+      <Field label="Tenure">
+        {(id) => (
+          <div className="flex items-center gap-2">
+            <Input
+              id={id}
+              type="number"
+              min={0}
+              value={d.years}
+              placeholder="20"
+              aria-label="Years"
+              onChange={(e) => set("years", e.target.value)}
+            />
+            <span className="text-sm">yrs</span>
+            <Input
+              type="number"
+              min={0}
+              max={11}
+              value={d.months}
+              placeholder="0"
+              aria-label="Months"
+              onChange={(e) => set("months", e.target.value)}
+            />
+            <span className="text-sm">mos</span>
+          </div>
+        )}
+      </Field>
+      <Field label="First EMI date">
+        {(id) => (
+          <Input
+            id={id}
+            type="date"
+            value={d.firstEmiDate}
+            onChange={(e) => set("firstEmiDate", e.target.value)}
+          />
+        )}
+      </Field>
+      <Field label="Bank's exact EMI (₹)" hint="Optional — if it differs from ours">
+        {(id) => (
+          <Input
+            id={id}
+            type="number"
+            min={0}
+            value={d.bankEmi}
+            placeholder={previewEmi ? String(Math.round(previewEmi)) : ""}
+            onChange={(e) => set("bankEmi", e.target.value)}
+          />
+        )}
+      </Field>
+    </div>
+  );
+
+  const remainingFields = (
+    <div className="grid gap-5 md:grid-cols-2">
+      <Field label="Current EMI (₹)">
+        {(id) => (
+          <Input
+            id={id}
+            type="number"
+            min={1}
+            value={d.currentEmi}
+            placeholder="23500"
+            onChange={(e) => set("currentEmi", e.target.value)}
+          />
+        )}
+      </Field>
+      <Field label="EMIs left">
+        {(id) => (
+          <Input
+            id={id}
+            type="number"
+            min={1}
+            value={d.emisLeft}
+            placeholder="48"
+            onChange={(e) => set("emisLeft", e.target.value)}
+          />
+        )}
+      </Field>
+      <RateField d={d} set={set} />
+      <Field label="Next EMI date">
+        {(id) => (
+          <Input
+            id={id}
+            type="date"
+            value={d.nextEmiDate}
+            onChange={(e) => set("nextEmiDate", e.target.value)}
+          />
+        )}
+      </Field>
+    </div>
+  );
+
   return (
-    <form onSubmit={submit} className="grid gap-5 lg:grid-cols-[1.5fr_1fr] items-start">
-      <div className="grid gap-5">
-        <SketchCard hoverable={false}>
-          <SectionLabel>What kind of loan?</SectionLabel>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {(Object.keys(loanKinds) as LoanKind[]).map((k) => (
-              <button
-                key={k}
-                type="button"
-                aria-pressed={d.kind === k}
-                onClick={() => {
-                  set("kind", k);
-                  if (k === "no_cost_emi" || k === "bnpl") set("rate", "0");
-                }}
-                className={cn("sketch-btn-ghost text-sm", d.kind === k && "bg-marker")}
-              >
-                {loanKinds[k].emoji} {loanKinds[k].label}
-              </button>
-            ))}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 mt-5">
-            <Field label="Name it" hint="So you recognise it">
-              <input
-                className="sketch-input"
-                value={d.name}
-                placeholder={loanKinds[d.kind].label}
-                onChange={(e) => set("name", e.target.value)}
-              />
-            </Field>
-            <Field label="Lender" hint="Optional">
-              <input
-                className="sketch-input"
-                value={d.lender}
-                placeholder="e.g. HDFC, SBI, Bajaj"
-                onChange={(e) => set("lender", e.target.value)}
-              />
-            </Field>
-          </div>
-        </SketchCard>
-
-        <SketchCard hoverable={false}>
-          {!existing && (
-            <div className="flex flex-wrap gap-2 mb-5" role="tablist">
-              <ModeButton active={mode === "original"} onClick={() => setMode("original")}>
-                I know the original loan
-              </ModeButton>
-              <ModeButton active={mode === "remaining"} onClick={() => setMode("remaining")}>
-                I only know my EMI & what's left
-              </ModeButton>
+    <form onSubmit={submit} className="grid items-start gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">What kind of loan?</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-5">
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(loanKinds) as LoanKind[]).map((k) => (
+                <Button
+                  key={k}
+                  type="button"
+                  size="sm"
+                  variant={d.kind === k ? "default" : "neutral"}
+                  aria-pressed={d.kind === k}
+                  onClick={() => {
+                    set("kind", k);
+                    if (k === "no_cost_emi" || k === "bnpl") set("rate", "0");
+                  }}
+                >
+                  {loanKinds[k].emoji} {loanKinds[k].label}
+                </Button>
+              ))}
             </div>
-          )}
-
-          {mode === "original" ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Amount borrowed (₹)">
-                <input
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  className="sketch-input"
-                  value={d.principal}
-                  placeholder="2500000"
-                  onChange={(e) => set("principal", e.target.value)}
-                />
-              </Field>
-              <RateField d={d} set={set} />
-              <Field label="Tenure">
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    className="sketch-input"
-                    value={d.years}
-                    placeholder="20"
-                    aria-label="Years"
-                    onChange={(e) => set("years", e.target.value)}
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="Name it" hint="So you recognise it">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={d.name}
+                    placeholder={loanKinds[d.kind].label}
+                    onChange={(e) => set("name", e.target.value)}
                   />
-                  <span className="self-center text-sm">yrs</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={11}
-                    className="sketch-input"
-                    value={d.months}
-                    placeholder="0"
-                    aria-label="Months"
-                    onChange={(e) => set("months", e.target.value)}
+                )}
+              </Field>
+              <Field label="Lender" hint="Optional">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={d.lender}
+                    placeholder="e.g. HDFC, SBI, Bajaj"
+                    onChange={(e) => set("lender", e.target.value)}
                   />
-                  <span className="self-center text-sm">mos</span>
-                </div>
-              </Field>
-              <Field label="First EMI date">
-                <input
-                  type="date"
-                  className="sketch-input"
-                  value={d.firstEmiDate}
-                  onChange={(e) => set("firstEmiDate", e.target.value)}
-                />
-              </Field>
-              <Field label="Bank's exact EMI (₹)" hint="Optional — if it differs from ours">
-                <input
-                  type="number"
-                  min={0}
-                  className="sketch-input"
-                  value={d.bankEmi}
-                  placeholder={previewEmi ? String(Math.round(previewEmi)) : ""}
-                  onChange={(e) => set("bankEmi", e.target.value)}
-                />
+                )}
               </Field>
             </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Current EMI (₹)">
-                <input
-                  type="number"
-                  min={1}
-                  className="sketch-input"
-                  value={d.currentEmi}
-                  placeholder="23500"
-                  onChange={(e) => set("currentEmi", e.target.value)}
-                />
-              </Field>
-              <Field label="EMIs left">
-                <input
-                  type="number"
-                  min={1}
-                  className="sketch-input"
-                  value={d.emisLeft}
-                  placeholder="48"
-                  onChange={(e) => set("emisLeft", e.target.value)}
-                />
-              </Field>
-              <RateField d={d} set={set} />
-              <Field label="Next EMI date">
-                <input
-                  type="date"
-                  className="sketch-input"
-                  value={d.nextEmiDate}
-                  onChange={(e) => set("nextEmiDate", e.target.value)}
-                />
-              </Field>
-            </div>
-          )}
-        </SketchCard>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">The numbers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {existing ? (
+              originalFields
+            ) : (
+              <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
+                <TabsList className="mb-4 h-auto flex-wrap justify-start">
+                  <TabsTrigger value="original">I know the original loan</TabsTrigger>
+                  <TabsTrigger value="remaining">I only know my EMI & what's left</TabsTrigger>
+                </TabsList>
+                <TabsContent value="original">{originalFields}</TabsContent>
+                <TabsContent value="remaining">{remainingFields}</TabsContent>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <SketchCard className="lg:sticky lg:top-24 bg-marker" hoverable={false}>
-        <SectionLabel>Preview</SectionLabel>
-        {preview ? (
-          <>
-            <div className="font-headline text-3xl">{inrFull(previewEmi)}/month</div>
-            <dl className="mt-3 grid gap-1 text-sm">
-              <Row
-                label={mode === "remaining" ? "Balance today" : "Borrowed"}
-                value={inrFull(preview.principal)}
-              />
-              <Row
-                label="Total interest"
-                value={inrFull(previewEmi * preview.tenureMonths - preview.principal)}
-              />
-              <Row
-                label="EMIs"
-                value={`${preview.tenureMonths} (${duration(preview.tenureMonths)})`}
-              />
-              <Row
-                label="Last EMI"
-                value={monthYear(addMonths(preview.firstEmiDate, preview.tenureMonths - 1))}
-              />
-            </dl>
-            {preview.annualRate === 0 && (
-              <div className="mt-3">
-                <StatusChip tone="info">0% — we split it evenly</StatusChip>
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="hand text-lg">Fill in the numbers to see your EMI.</p>
-        )}
-        {touched && result.error && (
-          <div className="chip bg-coral text-white text-xs mt-4">{result.error}</div>
-        )}
-        <button
-          type="submit"
-          disabled={saving}
-          className="sketch-btn w-full justify-center mt-5 disabled:opacity-60"
-        >
-          {saving ? "Saving…" : submitLabel}
-        </button>
-        <p className="text-xs mt-3 opacity-80">
-          Estimates use standard reducing-balance maths. Your bank's figures may differ by a few
-          rupees.
-        </p>
-      </SketchCard>
+      <Card className="bg-main lg:sticky lg:top-24">
+        <CardHeader>
+          <CardDescription className="font-heading uppercase tracking-widest">
+            Preview
+          </CardDescription>
+          <CardTitle className="font-display text-3xl">
+            {preview ? `${inrFull(previewEmi)}/month` : "Your EMI"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {preview ? (
+            <>
+              <dl className="grid gap-1.5 text-sm">
+                <Row
+                  label={mode === "remaining" ? "Balance today" : "Borrowed"}
+                  value={inrFull(preview.principal)}
+                />
+                <Row
+                  label="Total interest"
+                  value={inrFull(previewEmi * preview.tenureMonths - preview.principal)}
+                />
+                <Row
+                  label="EMIs"
+                  value={`${preview.tenureMonths} (${duration(preview.tenureMonths)})`}
+                />
+                <Row
+                  label="Last EMI"
+                  value={monthYear(addMonths(preview.firstEmiDate, preview.tenureMonths - 1))}
+                />
+              </dl>
+              {preview.annualRate === 0 && (
+                <ToneBadge tone="info">0% — we split it evenly</ToneBadge>
+              )}
+            </>
+          ) : (
+            <p>Fill in the numbers to see your EMI.</p>
+          )}
+          {touched && result.error && (
+            <Alert className="bg-bad">
+              <AlertCircle />
+              <AlertDescription>{result.error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+        <CardFooter className="flex-col items-stretch gap-3">
+          <Button type="submit" variant="neutral" size="lg" disabled={saving} className="w-full">
+            {saving ? "Saving…" : submitLabel}
+          </Button>
+          <p className="text-xs">
+            Estimates use standard reducing-balance maths. Your bank's figures may differ by a few
+            rupees.
+          </p>
+        </CardFooter>
+      </Card>
     </form>
   );
 }
@@ -339,39 +390,19 @@ function RateField({
 }) {
   return (
     <Field label="Interest rate (% a year)" hint={`Typical: ${loanKinds[d.kind].typicalRate}%`}>
-      <input
-        type="number"
-        min={0}
-        max={60}
-        step="0.01"
-        className="sketch-input"
-        value={d.rate}
-        placeholder={String(loanKinds[d.kind].typicalRate)}
-        onChange={(e) => set("rate", e.target.value)}
-      />
+      {(id) => (
+        <Input
+          id={id}
+          type="number"
+          min={0}
+          max={60}
+          step="0.01"
+          value={d.rate}
+          placeholder={String(loanKinds[d.kind].typicalRate)}
+          onChange={(e) => set("rate", e.target.value)}
+        />
+      )}
     </Field>
-  );
-}
-
-function ModeButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn("sketch-btn-ghost text-sm", active && "bg-ink text-paper")}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -382,22 +413,23 @@ function Field({
 }: {
   label: string;
   hint?: string;
-  children: React.ReactNode;
+  children: (id: string) => React.ReactNode;
 }) {
+  const id = useId();
   return (
-    <label className="block">
-      <span className="mini-label">{label}</span>
-      <div className="mt-1">{children}</div>
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-    </label>
+    <div className="grid content-start gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      {children(id)}
+      {hint && <p className="text-xs text-foreground/70">{hint}</p>}
+    </div>
   );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
-      <dt className="opacity-80">{label}</dt>
-      <dd className="font-semibold">{value}</dd>
+      <dt>{label}</dt>
+      <dd className="font-heading">{value}</dd>
     </div>
   );
 }

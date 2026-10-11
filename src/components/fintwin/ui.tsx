@@ -1,53 +1,44 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
+// App-level building blocks, composed from the shadcn (neobrutalism) components in components/ui.
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Menu,
-  X,
-  Compass,
-  User,
-  LogOut,
-  LayoutDashboard,
-  PlusCircle,
-  Rocket,
-  Settings,
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "firebase/auth";
+import {
+  Compass,
+  FlaskConical,
+  LineChart,
+  LogIn,
+  LogOut,
+  Menu,
+  Settings,
+  UserRound,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toneBg, type Tone } from "@/components/fintwin/tones";
+import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/integrations/firebase/client";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const nav = [
-  { to: "/", label: "My loans", icon: LayoutDashboard },
-  { to: "/loans/new", label: "Add a loan", icon: PlusCircle },
-  { to: "/plan", label: "Get out faster", icon: Rocket },
+  { to: "/", label: "Your future", icon: LineChart },
+  { to: "/what-if", label: "What if…", icon: FlaskConical },
+  { to: "/setup", label: "My twin", icon: UserRound },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export function NavBar({ onOpenSidebar }: { onOpenSidebar: () => void }) {
-  return (
-    <header className="sticky top-0 z-40 border-b-2 border-ink bg-paper/85 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={onOpenSidebar} className="sketch-btn-ghost !p-2" aria-label="Open menu">
-            <Menu className="h-5 w-5" />
-          </button>
-          <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl border-2 border-ink bg-marker shadow-[2px_2px_0_0_var(--ink)]">
-              <span className="font-headline text-lg">F</span>
-            </div>
-            <div className="leading-tight">
-              <div className="font-headline text-lg">Fin Twin</div>
-              <div className="hand text-xs text-muted-foreground -mt-1">EMI & loan tracker</div>
-            </div>
-          </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <AuthHeaderActions />
-        </div>
-      </div>
-    </header>
-  );
+function useIsActive() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 }
 
 function useSignOut() {
@@ -55,224 +46,246 @@ function useSignOut() {
   const queryClient = useQueryClient();
   return async () => {
     await signOut(auth);
-    // Drop the previous user's cached profile and goals.
+    // Drop the previous user's cached data.
     queryClient.clear();
     navigate({ to: "/" });
   };
 }
 
-function AuthHeaderActions() {
-  const { user, loading } = useAuth();
-  const handleSignOut = useSignOut();
-  if (loading) return null;
-  if (user) {
-    return (
-      <>
-        <span className="hand text-sm hidden md:inline text-muted-foreground truncate max-w-[160px]">
-          {user.email}
-        </span>
-        <button onClick={handleSignOut} className="sketch-btn-ghost text-sm" aria-label="Sign out">
-          <LogOut className="h-4 w-4" /> Sign out
-        </button>
-      </>
-    );
-  }
+function Logo() {
   return (
-    <>
-      <Link to="/login" className="sketch-btn-ghost text-sm">
-        Log in
-      </Link>
-      <Link to="/register" className="sketch-btn text-sm hidden sm:inline-flex">
-        Sync across devices
-      </Link>
-    </>
+    <Link to="/" className="flex items-center gap-2.5">
+      <span className="grid size-10 place-items-center rounded-base border-2 border-border bg-main font-display text-lg shadow-shadow">
+        F
+      </span>
+      <span className="leading-tight">
+        <span className="block font-display text-lg">Fin Twin</span>
+        <span className="block text-xs text-foreground/70">test decisions first</span>
+      </span>
+    </Link>
   );
 }
 
-const sideLink =
-  "flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-foreground/80 hover:bg-secondary hover:border-ink";
-const sideLinkActive = "bg-ink text-primary-foreground border-ink";
-
-function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { user } = useAuth();
-  const handleSignOut = useSignOut();
+function NavBar() {
+  const isActive = useIsActive();
   return (
-    <>
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-ink/40 animate-fade-in"
-          onClick={onClose}
-          aria-hidden
-        />
-      )}
-      <aside
-        className={cn(
-          "fixed top-0 left-0 z-50 h-full w-72 bg-paper border-r-2 border-ink shadow-[6px_0_0_0_var(--ink)] transition-transform duration-300",
-          open ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b-2 border-ink">
-          <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl border-2 border-ink bg-marker shadow-[2px_2px_0_0_var(--ink)]">
-              <span className="font-headline text-lg">F</span>
-            </div>
-            <div className="font-headline text-lg">Fin Twin</div>
-          </div>
-          <button onClick={onClose} className="sketch-btn-ghost !p-2" aria-label="Close menu">
-            <X className="h-5 w-5" />
-          </button>
+    <header className="sticky top-0 z-40 border-b-2 border-border bg-secondary-background">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-3">
+          <MobileMenu />
+          <Logo />
         </div>
-        <nav className="p-3 flex flex-col gap-1">
-          <div className="mini-label px-3 pt-2 pb-1">Sections</div>
+        <nav className="hidden items-center gap-2 lg:flex" aria-label="Main">
           {nav.map((n) => (
             <Link
               key={n.to}
               to={n.to}
-              activeOptions={{ exact: n.to === "/" }}
-              onClick={onClose}
-              className="flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-sm font-semibold text-foreground/80 hover:bg-secondary hover:border-ink"
-              activeProps={{
-                className:
-                  "bg-ink text-primary-foreground border-ink hover:bg-ink hover:text-primary-foreground",
-              }}
+              className={buttonVariants({
+                variant: isActive(n.to) ? "default" : "neutral",
+                size: "sm",
+              })}
             >
-              <n.icon className="h-4 w-4" />
-              {n.label}
+              <n.icon /> {n.label}
             </Link>
           ))}
-          <div className="mini-label px-3 pt-4 pb-1">Account</div>
+        </nav>
+        <AuthActions />
+      </div>
+    </header>
+  );
+}
+
+function AuthActions() {
+  const { user, loading } = useAuth();
+  const handleSignOut = useSignOut();
+  if (loading) return <div className="w-24" />;
+  if (user) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="hidden max-w-40 truncate text-sm text-foreground/70 xl:inline">
+          {user.email}
+        </span>
+        <Button variant="neutral" size="sm" onClick={handleSignOut}>
+          <LogOut /> Sign out
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <Link to="/login" className={buttonVariants({ variant: "neutral", size: "sm" })}>
+        Log in
+      </Link>
+      <Link to="/register" className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}>
+        Sync across devices
+      </Link>
+    </div>
+  );
+}
+
+function MobileMenu() {
+  const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const handleSignOut = useSignOut();
+  const isActive = useIsActive();
+  const item = (active: boolean) =>
+    cn(buttonVariants({ variant: active ? "default" : "neutral" }), "w-full justify-start");
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button variant="neutral" size="icon" aria-label="Open menu" className="lg:hidden" />
+        }
+      >
+        <Menu />
+      </SheetTrigger>
+      <SheetContent side="left" className="w-72 bg-secondary-background">
+        <SheetHeader className="border-b-2 border-border">
+          <SheetTitle className="font-display text-lg">Fin Twin</SheetTitle>
+          <SheetDescription>No bank connection, ever.</SheetDescription>
+        </SheetHeader>
+        <nav className="flex flex-col gap-3 px-4" aria-label="Main">
+          {nav.map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              onClick={() => setOpen(false)}
+              className={item(isActive(n.to))}
+            >
+              <n.icon /> {n.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-auto flex flex-col gap-3 border-t-2 border-border p-4">
           {user ? (
-            <button
+            <Button
+              variant="neutral"
+              className="w-full justify-start"
               onClick={() => {
-                onClose();
+                setOpen(false);
                 void handleSignOut();
               }}
-              className={sideLink}
             >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
+              <LogOut /> Sign out
+            </Button>
           ) : (
             <>
-              <Link
-                to="/login"
-                onClick={onClose}
-                className={sideLink}
-                activeProps={{ className: sideLinkActive }}
-              >
-                <User className="h-4 w-4" />
-                Login
+              <Link to="/login" onClick={() => setOpen(false)} className={item(isActive("/login"))}>
+                <LogIn /> Log in
               </Link>
               <Link
                 to="/register"
-                onClick={onClose}
-                className={sideLink}
-                activeProps={{ className: sideLinkActive }}
+                onClick={() => setOpen(false)}
+                className={item(isActive("/register"))}
               >
-                <Compass className="h-4 w-4" />
-                Register
+                <Compass /> Create an account
               </Link>
             </>
           )}
-        </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t-2 border-ink bg-butter">
-          <div className="hand text-sm">no bank connection, ever</div>
-          <div className="mini-label mt-1">Fin Twin © 2026</div>
         </div>
-      </aside>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 export function PageShell({ children, className }: { children: ReactNode; className?: string }) {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="min-h-screen">
-      <NavBar onOpenSidebar={() => setOpen(true)} />
-      <Sidebar open={open} onClose={() => setOpen(false)} />
-      <main className={cn("mx-auto max-w-7xl px-6 py-10 animate-fade-in", className)}>
+    <div className="flex min-h-screen flex-col">
+      <NavBar />
+      <main className={cn("mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6", className)}>
         {children}
       </main>
-      <footer className="border-t-2 border-ink py-8 mt-16">
-        <div className="mx-auto max-w-7xl px-6 flex items-center justify-between text-sm">
-          <span className="hand text-base">no bank connection, ever · your numbers stay yours</span>
-          <span className="mini-label">Fin Twin © 2026</span>
+      <footer className="border-t-2 border-border bg-secondary-background py-6">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 text-sm sm:px-6">
+          <span>No bank connection, ever · your numbers stay yours</span>
+          <span className="font-heading">Fin Twin © 2026</span>
         </div>
       </footer>
     </div>
   );
 }
 
-export function SectionLabel({ children }: { children: ReactNode }) {
-  return <div className="mini-label mb-2">{children}</div>;
-}
-
-export function Marker({ children }: { children: ReactNode }) {
-  return <span className="marker-hl">{children}</span>;
-}
-
-export function StatusChip({
-  tone = "neutral",
-  children,
-}: {
-  tone?: "good" | "warn" | "risk" | "neutral" | "info";
-  children: ReactNode;
-}) {
-  const bg: Record<string, string> = {
-    good: "bg-mint",
-    warn: "bg-butter",
-    risk: "bg-coral text-white",
-    neutral: "bg-card",
-    info: "bg-sky",
-  };
-  return <span className={cn("chip", bg[tone])}>{children}</span>;
-}
-
-export function SketchCard({
-  children,
-  className,
-  hoverable = true,
-  as: Tag = "div",
-}: {
-  children: ReactNode;
-  className?: string;
-  hoverable?: boolean;
-  as?: "div" | "section" | "article" | "li";
-}) {
+/** Small uppercase eyebrow above a heading or inside a card. */
+export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <Tag className={cn("sketch-card p-6", hoverable && "sketch-card-hover", className)}>
+    <p
+      className={cn(
+        "mb-2 text-xs font-heading uppercase tracking-widest text-foreground/70",
+        className,
+      )}
+    >
       {children}
-    </Tag>
+    </p>
   );
 }
 
-export function DashedCard({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("dashed-card p-6", className)}>{children}</div>;
+/** Highlighted words inside a headline. */
+export function Marker({ children }: { children: ReactNode }) {
+  return (
+    <span className="rounded-base border-2 border-border bg-main px-1.5 box-decoration-clone">
+      {children}
+    </span>
+  );
+}
+
+export function ToneBadge({
+  tone = "neutral",
+  children,
+  className,
+}: {
+  tone?: Tone;
+  children: ReactNode;
+  className?: string;
+}) {
+  return <Badge className={cn("font-heading", toneBg[tone], className)}>{children}</Badge>;
+}
+
+/** Page heading with an optional eyebrow and supporting line. */
+export function PageHeading({
+  eyebrow,
+  children,
+  description,
+}: {
+  eyebrow?: ReactNode;
+  children: ReactNode;
+  description?: ReactNode;
+}) {
+  return (
+    <div>
+      {eyebrow && <SectionLabel>{eyebrow}</SectionLabel>}
+      <h1 className="font-display text-4xl leading-tight md:text-5xl">{children}</h1>
+      {description && <p className="mt-2 text-lg text-foreground/80">{description}</p>}
+    </div>
+  );
 }
 
 export function StatTile({
   label,
   value,
   hint,
-  tone = "card",
+  tone = "neutral",
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
-  tone?: "card" | "mint" | "sky" | "butter" | "coral";
+  tone?: Tone;
 }) {
-  const bg: Record<string, string> = {
-    card: "bg-card",
-    mint: "bg-mint",
-    sky: "bg-sky",
-    butter: "bg-butter",
-    coral: "bg-coral text-white",
-  };
   return (
-    <div className={cn("sketch-card p-5", bg[tone])}>
-      <div className="mini-label">{label}</div>
-      <div className="font-headline text-3xl mt-1">{value}</div>
-      {hint && <div className="text-xs mt-1 opacity-80">{hint}</div>}
-    </div>
+    <Card size="sm" className={cn("gap-1", toneBg[tone])}>
+      <CardContent>
+        <SectionLabel className="mb-1 text-foreground/80">{label}</SectionLabel>
+        <div className="font-display text-2xl md:text-3xl">{value}</div>
+        {hint && <div className="mt-1 text-xs">{hint}</div>}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function Loading({ children }: { children: ReactNode }) {
+  return (
+    <PageShell>
+      <p className="font-heading text-lg">{children}</p>
+    </PageShell>
   );
 }

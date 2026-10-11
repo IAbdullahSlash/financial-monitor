@@ -1,304 +1,198 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarClock, Lock, PlusCircle, Rocket } from "lucide-react";
+import { useMemo } from "react";
+import { AlertTriangle, ArrowRight, CheckCircle2, FlaskConical, Lock, XCircle } from "lucide-react";
 import {
-  PageShell,
-  SketchCard,
-  SectionLabel,
+  Loading,
   Marker,
+  PageHeading,
+  PageShell,
+  SectionLabel,
   StatTile,
-  StatusChip,
-  DashedCard,
+  ToneBadge,
 } from "@/components/fintwin/ui";
-import { PaidBar } from "@/components/fintwin/loan-charts";
-import { useLoans, useSettings } from "@/hooks/use-loans";
-import {
-  loanKinds,
-  loanStatus,
-  parseDate,
-  simulatePortfolio,
-  type Loan,
-  type LoanStatus,
-} from "@/lib/loans";
-import { dayMonth, duration, inr, inrFull, monthYear } from "@/lib/format";
+import { type Tone } from "@/components/fintwin/tones";
+import { NetWorthChart } from "@/components/fintwin/twin-charts";
+import { moments, type Moment } from "@/components/fintwin/moments";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLoans, useTwin } from "@/hooks/use-store";
+import { project, type Twin } from "@/lib/twin";
+import { loanStatus, type Loan } from "@/lib/loans";
+import { inr, monthYear } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fin Twin — EMI & Loan Tracker" },
+      { title: "Fin Twin — Test money decisions on your twin first" },
       {
         name: "description",
         content:
-          "Every EMI and loan in one place: paid vs remaining, interest, and your debt-free date. No bank connection needed.",
+          "Build a simple financial twin from a few numbers, see where your money is heading, and try decisions on it before you make them for real.",
       },
     ],
   }),
-  component: Overview,
+  component: Home,
 });
 
-function Overview() {
-  const { loans, loading } = useLoans();
-
-  if (loading) {
-    return (
-      <PageShell>
-        <div className="hand text-lg">Loading your loans…</div>
-      </PageShell>
-    );
-  }
-  return <PageShell>{loans.length ? <LoanOverview loans={loans} /> : <EmptyState />}</PageShell>;
+function Home() {
+  const { twin, loading } = useTwin();
+  const { loans, loading: loansLoading } = useLoans();
+  if (loading || loansLoading) return <Loading>Waking up your twin…</Loading>;
+  return <PageShell>{twin ? <Future twin={twin} loans={loans} /> : <Landing />}</PageShell>;
 }
 
-function EmptyState() {
+const steps = [
+  { tone: "good", text: "Tell it your pay, spending, savings, loans and goals" },
+  { tone: "info", text: "See your future: net worth, goals, debt-free date" },
+  { tone: "warn", text: "Ask “what if…?” and compare the two futures" },
+] as const;
+
+function Landing() {
   return (
-    <section className="grid gap-8 lg:grid-cols-[1.2fr_1fr] items-center">
-      <div className="animate-fade-in">
-        <h1 className="font-headline text-5xl md:text-6xl leading-[0.95]">
-          All your EMIs. <Marker>One honest picture</Marker>.
+    <section className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
+      <div>
+        <h1 className="font-display text-5xl leading-tight md:text-6xl">
+          Try money decisions on your <Marker>twin</Marker> first.
         </h1>
-        <p className="hand text-xl md:text-2xl mt-5 text-foreground/80 max-w-xl">
-          Home loan, car loan, that phone on “no-cost” EMI — see what you’ve paid, what’s left, and
-          the day you’ll be debt-free.
+        <p className="mt-5 max-w-xl text-xl text-foreground/80">
+          Give it a few numbers. It shows where your money is heading over the next 10 years — and
+          what a car, a loan, a job switch or a break would do to that future.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/loans/new" className="sketch-btn">
-            <PlusCircle className="h-4 w-4" /> Add your first loan
-          </Link>
-        </div>
-        <div className="mt-6 flex items-start gap-2 text-sm text-muted-foreground max-w-md">
-          <Lock className="h-4 w-4 mt-0.5 shrink-0" />
-          No bank connection, no sign-up. Your loans stay on this device unless you choose to create
-          an account.
-        </div>
+        <Link to="/setup" className={buttonVariants({ size: "lg", className: "mt-8" })}>
+          Build my twin — 2 minutes <ArrowRight />
+        </Link>
+        <p className="mt-6 flex max-w-md items-start gap-2 text-sm text-foreground/70">
+          <Lock className="mt-0.5 size-4 shrink-0" />
+          No bank connection, no sign-up. Your numbers stay on this device unless you create an
+          account.
+        </p>
       </div>
-      <DashedCard>
-        <SectionLabel>What you’ll see</SectionLabel>
-        <ol className="space-y-3 text-sm mt-2">
-          <li className="flex gap-2">
-            <span className="chip bg-mint">1</span> Paid vs remaining for every loan
-          </li>
-          <li className="flex gap-2">
-            <span className="chip bg-sky">2</span> How much of your EMI is just interest
-          </li>
-          <li className="flex gap-2">
-            <span className="chip bg-butter">3</span> Your debt-free date — and how to pull it
-            closer
-          </li>
-        </ol>
-      </DashedCard>
+      <Card className="bg-secondary-background">
+        <CardHeader>
+          <CardTitle className="text-xl">How it works</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="grid gap-4">
+            {steps.map((s, i) => (
+              <li key={s.text} className="flex items-center gap-3">
+                <ToneBadge tone={s.tone} className="size-7 justify-center text-sm">
+                  {i + 1}
+                </ToneBadge>
+                {s.text}
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
     </section>
   );
 }
 
-function LoanOverview({ loans }: { loans: Loan[] }) {
-  const { settings } = useSettings();
-  const rows = loans.map((loan) => ({ loan, s: loanStatus(loan) }));
-  const open = rows.filter((r) => !r.s.closed);
-  const closed = rows.filter((r) => r.s.closed);
+const toneIcon = { good: CheckCircle2, warn: AlertTriangle, risk: XCircle };
+const toneOf: Record<Moment["tone"], Tone> = { good: "good", warn: "warn", risk: "bad" };
 
-  const owed = open.reduce((a, r) => a + r.s.outstanding, 0);
-  const borrowed = open.reduce((a, r) => a + r.loan.principal, 0);
-  const monthlyEmi = open.reduce((a, r) => a + r.s.emi, 0);
-  const interestLeft = open.reduce((a, r) => a + r.s.interestRemaining, 0);
-  const progress = borrowed > 0 ? 1 - owed / borrowed : 1;
-
-  const base = simulatePortfolio(loans);
-  const teaser = simulatePortfolio(loans, { extraMonthly: 5000, rollover: true });
-  const monthsSooner = base.months - teaser.months;
-
-  const emiShare = settings.takeHome ? monthlyEmi / settings.takeHome : null;
-
-  // Due dates in the next ~5 weeks, soonest first.
-  const horizon = new Date();
-  horizon.setDate(horizon.getDate() + 35);
-  const upcoming = open
-    .filter((r) => r.s.nextDue && parseDate(r.s.nextDue) <= horizon)
-    .sort((a, b) => a.s.nextDue!.localeCompare(b.s.nextDue!));
+function Future({ twin, loans }: { twin: Twin; loans: Loan[] }) {
+  const p = useMemo(() => project(twin, loans), [twin, loans]);
+  const list = useMemo(() => moments(p), [p]);
+  // Next month is a typical month; this one may already have had its EMIs paid.
+  const typical = p.points[1];
+  const debtToday = loans.reduce((sum, l) => sum + loanStatus(l).outstanding, 0);
+  const netWorthToday = twin.savings + twin.investments - debtToday;
+  const in5 = p.points[59];
+  const in10 = p.points[119];
 
   return (
     <>
-      <div className="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <SectionLabel>My loans</SectionLabel>
-          {base.neverEnds ? (
-            <h1 className="font-headline text-4xl md:text-5xl">
-              One loan <Marker>never ends</Marker> at its current EMI.
-            </h1>
-          ) : open.length ? (
-            <h1 className="font-headline text-4xl md:text-5xl">
-              Debt-free in <Marker>{monthYear(base.debtFreeDate)}</Marker>.
-            </h1>
-          ) : (
-            <h1 className="font-headline text-4xl md:text-5xl">
-              You’re <Marker>debt-free</Marker>. 🎉
-            </h1>
-          )}
-          {open.length > 0 && !base.neverEnds && (
-            <p className="hand text-lg mt-1 text-muted-foreground">
-              {duration(base.months)} to go across {open.length} loan{open.length === 1 ? "" : "s"}.
-            </p>
-          )}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeading eyebrow="Your future" description="If nothing changes. Want to test a change?">
+          In 10 years your twin is worth <Marker>{inr(in10.netWorth)}</Marker>.
+        </PageHeading>
+        <div className="flex gap-3">
+          <Link to="/setup" className={buttonVariants({ variant: "neutral" })}>
+            Edit my twin
+          </Link>
+          <Link to="/what-if" className={buttonVariants()}>
+            <FlaskConical /> Try a what-if
+          </Link>
         </div>
-        <Link to="/loans/new" className="sketch-btn">
-          <PlusCircle className="h-4 w-4" /> Add a loan
-        </Link>
       </div>
 
-      {open.length > 0 && (
-        <>
-          <SketchCard className="mt-8" hoverable={false}>
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="font-semibold">
-                {Math.round(progress * 100)}% of what you borrowed is repaid
-              </span>
-              <span className="mini-label">
-                {inr(borrowed - owed)} paid · {inr(owed)} left
-              </span>
-            </div>
-            <PaidBar progress={progress} size="lg" />
-          </SketchCard>
+      <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatTile
+          tone={typical.free >= 0 ? "good" : "bad"}
+          label="Left each month"
+          value={inr(typical.free)}
+          hint="after spending, EMIs & investing"
+        />
+        <StatTile
+          tone="info"
+          label="Net worth today"
+          value={inr(netWorthToday)}
+          hint="what you own − what you owe"
+        />
+        <StatTile
+          tone="warn"
+          label="In 5 years"
+          value={inr(in5.netWorth)}
+          hint={monthYear(in5.date)}
+        />
+        <StatTile
+          tone="neutral"
+          label="In 10 years"
+          value={inr(in10.netWorth)}
+          hint={monthYear(in10.date)}
+        />
+      </div>
 
-          <div className="grid gap-5 grid-cols-2 md:grid-cols-4 mt-6">
-            <StatTile
-              tone="coral"
-              label="Still owed"
-              value={inr(owed)}
-              hint="principal outstanding"
-            />
-            <StatTile
-              tone="sky"
-              label="EMIs each month"
-              value={inr(monthlyEmi)}
-              hint={
-                emiShare !== null ? (
-                  `${Math.round(emiShare * 100)}% of take-home pay`
-                ) : (
-                  <Link to="/settings" className="underline">
-                    Add take-home pay to see %
-                  </Link>
-                )
-              }
-            />
-            <StatTile
-              tone="butter"
-              label="Interest still to pay"
-              value={inr(interestLeft)}
-              hint="if nothing changes"
-            />
-            <StatTile
-              tone="mint"
-              label="Repaid so far"
-              value={inr(borrowed - owed)}
-              hint={`of ${inr(borrowed)}`}
-            />
-          </div>
-        </>
-      )}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Net worth, next 10 years</CardTitle>
+            <CardDescription>
+              Assumes {twin.assumptions.raisePct}% pay rise, {twin.assumptions.inflationPct}% rise
+              in spending and {twin.assumptions.returnPct}% investment return a year, and that
+              anything left over is saved.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <NetWorthChart base={p.points} />
+          </CardContent>
+        </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] mt-8 items-start">
-        <div className="grid gap-4">
-          {open.map(({ loan, s }) => (
-            <LoanCard key={loan.id} loan={loan} s={s} />
-          ))}
-          {closed.length > 0 && (
-            <details className="dashed-card p-4">
-              <summary className="cursor-pointer font-semibold text-sm">
-                Closed loans ({closed.length})
-              </summary>
-              <div className="grid gap-3 mt-3">
-                {closed.map(({ loan, s }) => (
-                  <LoanCard key={loan.id} loan={loan} s={s} />
-                ))}
-              </div>
-            </details>
-          )}
-        </div>
-
-        <div className="grid gap-5">
-          {open.length > 0 && !base.neverEnds && monthsSooner > 0 && (
-            <SketchCard className="bg-marker" hoverable={false}>
-              <div className="flex items-center gap-2">
-                <Rocket className="h-4 w-4" />
-                <SectionLabel>Get out faster</SectionLabel>
-              </div>
-              <div className="font-headline text-2xl">
-                ₹5,000 extra a month → debt-free {duration(monthsSooner)} sooner.
-              </div>
-              <p className="hand text-base mt-1">
-                and about {inr(base.totalInterest - teaser.totalInterest)} less interest.
-              </p>
-              <Link to="/plan" className="sketch-btn text-sm mt-4">
-                Try your own numbers <ArrowRight className="h-4 w-4" />
-              </Link>
-            </SketchCard>
-          )}
-
-          {open.length > 0 && (
-            <SketchCard hoverable={false}>
-              <div className="flex items-center gap-2">
-                <CalendarClock className="h-4 w-4" />
-                <SectionLabel>Coming up</SectionLabel>
-              </div>
-              {upcoming.length ? (
-                <ul className="divide-y divide-ink/15">
-                  {upcoming.map(({ loan, s }) => (
-                    <li key={loan.id} className="flex items-center justify-between py-2 text-sm">
-                      <span>
-                        <span className="font-semibold">{dayMonth(s.nextDue)}</span> · {loan.name}
-                      </span>
-                      <span className="font-headline">{inrFull(s.emi)}</span>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">What your twin sees coming</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {list.length ? (
+              <ol className="grid gap-4">
+                {list.slice(0, 7).map((m, i) => {
+                  const Icon = toneIcon[m.tone];
+                  return (
+                    <li key={i} className="flex items-start gap-3">
+                      <ToneBadge tone={toneOf[m.tone]} className="shrink-0">
+                        <Icon /> {monthYear(m.date)}
+                      </ToneBadge>
+                      <span className="text-sm">{m.text}</span>
                     </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">No EMIs due in the next few weeks.</p>
-              )}
-            </SketchCard>
-          )}
-        </div>
+                  );
+                })}
+              </ol>
+            ) : (
+              <p className="text-sm text-foreground/70">
+                Nothing dramatic ahead. Add a goal or a loan on{" "}
+                <Link to="/setup" className="font-heading underline underline-offset-4">
+                  your twin
+                </Link>{" "}
+                to see more.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
+      <SectionLabel className="mt-8 normal-case tracking-normal">
+        A projection from your own numbers and assumptions — not financial advice.
+      </SectionLabel>
     </>
-  );
-}
-
-function LoanCard({ loan, s }: { loan: Loan; s: LoanStatus }) {
-  const kind = loanKinds[loan.kind];
-  return (
-    <Link
-      to="/loans/$id"
-      params={{ id: loan.id }}
-      className="sketch-card sketch-card-hover p-5 block"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-11 w-11 shrink-0 grid place-items-center rounded-xl border-2 border-ink bg-butter text-xl">
-            {kind.emoji}
-          </div>
-          <div className="min-w-0">
-            <div className="font-headline text-lg truncate">{loan.name}</div>
-            <div className="text-xs text-muted-foreground truncate">
-              {kind.label}
-              {loan.lender ? ` · ${loan.lender}` : ""} · {loan.annualRate}%
-            </div>
-          </div>
-        </div>
-        {s.closed ? (
-          <StatusChip tone="good">Closed</StatusChip>
-        ) : s.neverEnds ? (
-          <StatusChip tone="risk">Check EMI</StatusChip>
-        ) : (
-          <StatusChip tone="neutral">{s.emisLeft} EMIs left</StatusChip>
-        )}
-      </div>
-      <PaidBar progress={s.progress} className="mt-4" />
-      <div className="mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs">
-        <span>
-          <span className="font-semibold">{Math.round(s.progress * 100)}% paid</span> ·{" "}
-          {inr(s.outstanding)} left
-        </span>
-        <span className="text-muted-foreground">
-          {inrFull(s.emi)}/mo · ends {monthYear(s.endDate)}
-        </span>
-      </div>
-    </Link>
   );
 }

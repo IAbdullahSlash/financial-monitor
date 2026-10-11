@@ -2,17 +2,22 @@ import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
+// neobrutalism.dev doesn't publish a Sonner component; this is shadcn's, styled with its tokens.
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
       toastOptions={{
+        unstyled: true,
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "flex w-full items-center gap-3 rounded-base border-2 border-border bg-secondary-background p-4 text-sm font-base text-foreground shadow-shadow",
+          title: "font-heading",
+          description: "text-foreground/80",
+          success: "bg-good",
+          error: "bg-bad",
+          actionButton: "rounded-base border-2 border-border bg-main px-2 py-1 font-heading",
+          cancelButton: "rounded-base border-2 border-border bg-secondary-background px-2 py-1",
         },
       }}
       {...props}

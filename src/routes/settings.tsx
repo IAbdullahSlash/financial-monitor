@@ -1,10 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { deleteUser } from "firebase/auth";
 import { Download, Lock, Trash2 } from "lucide-react";
-import { PageShell, SketchCard, SectionLabel, Marker } from "@/components/fintwin/ui";
-import { useDeleteAllData, useLoans, useSaveSettings, useSettings } from "@/hooks/use-loans";
+import { Marker, PageHeading, PageShell } from "@/components/fintwin/ui";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useDeleteAllData, useExport } from "@/hooks/use-store";
+import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/integrations/firebase/client";
 import { downloadFile } from "@/lib/calendar";
 import { friendlyError } from "@/lib/auth-errors";
@@ -16,31 +26,15 @@ export const Route = createFileRoute("/settings")({
 
 function Settings() {
   const navigate = useNavigate();
-  const { settings, user, loading } = useSettings();
-  const { loans } = useLoans();
-  const saveSettings = useSaveSettings();
+  const { user } = useAuth();
+  const data = useExport();
   const wipe = useDeleteAllData();
-  const [takeHome, setTakeHome] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!loading) setTakeHome(settings.takeHome ? String(settings.takeHome) : "");
-  }, [loading, settings.takeHome]);
-
-  function saveTakeHome(e: React.FormEvent) {
-    e.preventDefault();
-    const value = takeHome.trim() === "" ? null : Math.max(0, Number(takeHome));
-    saveSettings.mutate(
-      { takeHome: value },
-      {
-        onSuccess: () => toast.success("Saved"),
-        onError: (err) => toast.error(friendlyError(err, err.message || "Couldn't save.")),
-      },
-    );
-  }
-
   async function deleteEverything(alsoAccount: boolean) {
-    const what = alsoAccount ? "your account and all your loans" : "all your loans and settings";
+    const what = alsoAccount
+      ? "your account and everything in it"
+      : "your twin, loans and scenarios";
     if (!window.confirm(`Permanently delete ${what}? This can't be undone.`)) return;
     setBusy(true);
     try {
@@ -60,103 +54,88 @@ function Settings() {
     }
   }
 
+  function exportData() {
+    downloadFile(
+      "fintwin-data.json",
+      JSON.stringify(
+        {
+          exportedAt: new Date().toISOString(),
+          twin: data.twin,
+          loans: data.loans,
+          scenarios: data.scenarios,
+        },
+        null,
+        2,
+      ),
+      "application/json",
+    );
+  }
+
   return (
     <PageShell>
-      <div className="max-w-3xl">
-        <SectionLabel>Settings</SectionLabel>
-        <h1 className="font-headline text-4xl md:text-5xl">
+      <div className="grid max-w-3xl gap-6">
+        <PageHeading eyebrow="Settings">
           Your data, <Marker>your call</Marker>.
-        </h1>
+        </PageHeading>
 
-        <SketchCard className="mt-8" hoverable={false}>
-          <SectionLabel>Take-home pay</SectionLabel>
-          <p className="text-sm">
-            Optional. Used only to show what share of your salary goes to EMIs.
-          </p>
-          <form onSubmit={saveTakeHome} className="flex flex-wrap gap-3 mt-3">
-            <input
-              type="number"
-              min={0}
-              className="sketch-input max-w-xs"
-              placeholder="Monthly, after tax (₹)"
-              value={takeHome}
-              onChange={(e) => setTakeHome(e.target.value)}
-              aria-label="Monthly take-home pay"
-            />
-            <button className="sketch-btn" disabled={saveSettings.isPending}>
-              Save
-            </button>
-          </form>
-        </SketchCard>
-
-        <SketchCard className="mt-5" hoverable={false}>
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            <SectionLabel>Where your data lives</SectionLabel>
-          </div>
-          {user ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Lock className="size-5" /> Where your data lives
+            </CardTitle>
+            <CardDescription>
+              {user ? (
+                <>
+                  Signed in as <span className="font-heading">{user.email}</span>. Your twin is
+                  saved to your account so it syncs across devices. Only you can read it.
+                </>
+              ) : (
+                <>
+                  Only in this browser. Nothing is sent to us. Clearing your browser data will erase
+                  it, so create an account if you want a backup or to use another device.
+                </>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <p className="text-sm">
-              Signed in as <span className="font-semibold">{user.email}</span>. Your loans are saved
-              to your account so they sync across devices. Only you can read them.
+              We never connect to your bank and never ask for account numbers. We store only the
+              numbers you type in.
             </p>
-          ) : (
-            <>
-              <p className="text-sm">
-                Only in this browser. Nothing is sent to us. Clearing your browser data will erase
-                it, so create an account if you want a backup or to use another device.
-              </p>
-              <Link to="/register" className="sketch-btn-ghost text-sm mt-3">
+          </CardContent>
+          <CardFooter className="flex-wrap gap-3">
+            <Button variant="neutral" disabled={!data.hasData} onClick={exportData}>
+              <Download /> Download my data
+            </Button>
+            {!user && (
+              <Link to="/register" className={buttonVariants()}>
                 Create an account
               </Link>
-            </>
-          )}
-          <p className="text-sm mt-3">
-            We never connect to your bank and never ask for account numbers. We store only the loan
-            details you type in.
-          </p>
-          <button
-            className="sketch-btn-ghost text-sm mt-4"
-            disabled={!loans.length}
-            onClick={() =>
-              downloadFile(
-                "fintwin-loans.json",
-                JSON.stringify({ exportedAt: new Date().toISOString(), settings, loans }, null, 2),
-                "application/json",
-              )
-            }
-          >
-            <Download className="h-4 w-4" /> Download my data
-          </button>
-        </SketchCard>
-
-        <SketchCard className="mt-5 border-coral" hoverable={false}>
-          <div className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4" />
-            <SectionLabel>Delete</SectionLabel>
-          </div>
-          <p className="text-sm">
-            Permanently removes every loan and setting
-            {user ? " from your account and this browser" : " from this browser"}.
-          </p>
-          <div className="flex flex-wrap gap-2 mt-3">
-            <button
-              className="sketch-btn-ghost text-sm"
-              disabled={busy}
-              onClick={() => deleteEverything(false)}
-            >
-              Delete all my data
-            </button>
-            {user && (
-              <button
-                className="sketch-btn text-sm bg-coral text-white"
-                disabled={busy}
-                onClick={() => deleteEverything(true)}
-              >
-                Delete my account too
-              </button>
             )}
-          </div>
-        </SketchCard>
+          </CardFooter>
+        </Card>
+
+        <Card className="bg-bad">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Trash2 className="size-5" /> Delete
+            </CardTitle>
+            <CardDescription>
+              Permanently removes your twin, loans and scenarios
+              {user ? " from your account and this browser" : " from this browser"}.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex-wrap gap-3">
+            <Button variant="neutral" disabled={busy} onClick={() => deleteEverything(false)}>
+              Delete all my data
+            </Button>
+            {user && (
+              <Button variant="neutral" disabled={busy} onClick={() => deleteEverything(true)}>
+                Delete my account too
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
       </div>
     </PageShell>
   );

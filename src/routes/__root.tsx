@@ -7,32 +7,31 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import icon from "../media/icon.png?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { useMoveLocalDataOnSignIn } from "@/hooks/use-loans";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMoveLocalDataOnSignIn } from "@/hooks/use-store";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+      <Card className="w-full max-w-md bg-secondary-background text-center">
+        <CardHeader>
+          <CardTitle className="font-display text-7xl">404</CardTitle>
+          <CardDescription className="text-base">
+            The page you're looking for doesn't exist or has been moved.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="justify-center">
+          <Link to="/" className={buttonVariants()}>
             Go home
           </Link>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
@@ -40,37 +39,30 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
+      <Card className="w-full max-w-md bg-secondary-background text-center">
+        <CardHeader>
+          <CardTitle className="font-display text-2xl">This page didn't load</CardTitle>
+          <CardDescription className="text-base">
+            Something went wrong on our end. You can try refreshing or head back home.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex-wrap justify-center gap-3">
+          <Button
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
+          </Button>
+          <a href="/" className={buttonVariants({ variant: "neutral" })}>
             Go home
           </a>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
@@ -80,17 +72,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Fin Twin — EMI & Loan Tracker" },
+      { title: "Fin Twin — Test money decisions first" },
       {
         name: "description",
         content:
-          "Track every EMI and loan in one place. See what you've paid, what's left, and how to be debt-free sooner. No bank connection needed.",
+          "Build a simple financial twin, see where your money is heading, and try decisions on it before you make them for real. No bank connection needed.",
       },
       { name: "author", content: "Fin Twin" },
-      { property: "og:title", content: "Fin Twin — EMI & Loan Tracker" },
+      { property: "og:title", content: "Fin Twin — Test money decisions first" },
       {
         property: "og:description",
-        content: "See your debt-free date — and how to reach it sooner.",
+        content: "What would a car, a loan or a career break do to your future? Ask your twin.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -102,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Kalam:wght@400;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;700;800&display=swap",
       },
     ],
   }),

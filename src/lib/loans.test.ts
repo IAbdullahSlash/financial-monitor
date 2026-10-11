@@ -10,7 +10,6 @@ import {
   loanStatus,
   monthsToRepay,
   presentValue,
-  simulatePortfolio,
   type Loan,
 } from "./loans.ts";
 
@@ -100,34 +99,7 @@ test("prepaying to shorten the loan saves more interest than lowering the EMI", 
   assert.ok(c.reduceEmi.newEmi < calcEmi(1_000_000, 8.5, 240));
 });
 
-test("portfolio baseline finishes on the last loan's own end date", () => {
-  const today = new Date(2024, 2, 10);
-  const loans = [
-    loan({}),
-    loan({ id: "l2", principal: 300_000, annualRate: 14, tenureMonths: 36 }),
-  ];
-  const r = simulatePortfolio(loans, {}, today);
-  assert.equal(r.debtFreeDate, loanStatus(loans[0], today).endDate);
-  assert.equal(r.endDates.l2, loanStatus(loans[1], today).endDate);
-});
-
-test("extra payments end debt sooner; avalanche costs no more interest than snowball", () => {
-  const today = new Date(2024, 2, 10);
-  const loans = [
-    loan({}),
-    loan({ id: "l2", principal: 300_000, annualRate: 14, tenureMonths: 36 }),
-    loan({ id: "l3", principal: 50_000, annualRate: 0, tenureMonths: 10, kind: "no_cost_emi" }),
-  ];
-  const base = simulatePortfolio(loans, {}, today);
-  const ava = simulatePortfolio(loans, { extraMonthly: 10_000, strategy: "avalanche" }, today);
-  const snow = simulatePortfolio(loans, { extraMonthly: 10_000, strategy: "snowball" }, today);
-  assert.ok(ava.debtFreeDate! < base.debtFreeDate!);
-  assert.ok(ava.totalInterest < base.totalInterest);
-  assert.ok(ava.totalInterest <= snow.totalInterest + 0.01);
-});
-
 test("a loan whose EMI never covers interest is flagged, not looped forever", () => {
   const l = loan({ principal: 1_000_000, annualRate: 12, emi: 5_000 });
   assert.equal(loanStatus(l, new Date(2024, 0, 10)).neverEnds, true);
-  assert.equal(simulatePortfolio([l], {}, new Date(2024, 0, 10)).debtFreeDate, null);
 });

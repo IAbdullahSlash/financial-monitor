@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { PageShell, SectionLabel, Marker } from "@/components/fintwin/ui";
+import { Marker, PageHeading, PageShell } from "@/components/fintwin/ui";
 import { LoanForm } from "@/components/fintwin/LoanForm";
-import { useSaveLoan } from "@/hooks/use-loans";
+import { useSaveLoan } from "@/hooks/use-store";
 import { friendlyError } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/loans/new")({
@@ -15,10 +15,11 @@ function NewLoan() {
   const save = useSaveLoan();
   return (
     <PageShell>
-      <SectionLabel>Add a loan</SectionLabel>
-      <h1 className="font-headline text-4xl md:text-5xl mb-8">
-        Tell us about <Marker>one loan</Marker>.
-      </h1>
+      <div className="mb-8">
+        <PageHeading eyebrow="Add a loan">
+          Tell us about <Marker>one loan</Marker>.
+        </PageHeading>
+      </div>
       <LoanForm
         submitLabel="Add loan"
         saving={save.isPending}
@@ -26,7 +27,7 @@ function NewLoan() {
           save.mutate(loan, {
             onSuccess: () => {
               toast.success(`${loan.name} added`);
-              navigate({ to: "/loans/$id", params: { id: loan.id } });
+              navigate({ to: "/setup", hash: "loans" });
             },
             onError: (err) =>
               toast.error(friendlyError(err, err.message || "Couldn't save the loan.")),

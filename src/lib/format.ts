@@ -26,11 +26,6 @@ export function monthYear(iso: string | null | undefined) {
   return parseDate(iso).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
-export function dayMonth(iso: string | null | undefined) {
-  if (!iso) return "—";
-  return parseDate(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-}
-
 /** 38 → "3 yrs 2 mos". */
 export function duration(months: number) {
   const y = Math.floor(months / 12);

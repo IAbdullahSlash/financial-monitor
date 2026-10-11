@@ -7,7 +7,7 @@ export const Route = createFileRoute("/sitemap.xml")({
       GET: async ({ request }) => {
         // Sitemap <loc> values must be absolute URLs.
         const origin = new URL(request.url).origin;
-        const paths = ["/", "/plan", "/loans/new"];
+        const paths = ["/", "/what-if", "/setup"];
         const urls = paths
           .map(
             (p) =>

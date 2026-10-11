@@ -1,17 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CalendarPlus, Pencil, Scale, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CalendarPlus, Pencil, Scale, Trash2 } from "lucide-react";
 import {
-  PageShell,
-  SketchCard,
-  SectionLabel,
+  Loading,
   Marker,
+  PageShell,
+  SectionLabel,
   StatTile,
-  StatusChip,
+  ToneBadge,
 } from "@/components/fintwin/ui";
 import { PaidBar, YearlyChart } from "@/components/fintwin/loan-charts";
-import { useDeleteLoan, useLoan, useSaveLoan } from "@/hooks/use-loans";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useDeleteLoan, useLoan, useSaveLoan } from "@/hooks/use-store";
 import {
   comparePrepayment,
   loanKinds,
@@ -34,19 +39,13 @@ function LoanDetail() {
   const { id } = Route.useParams();
   const { loan, loading } = useLoan(id);
 
-  if (loading) {
-    return (
-      <PageShell>
-        <div className="hand text-lg">Loading…</div>
-      </PageShell>
-    );
-  }
+  if (loading) return <Loading>Loading…</Loading>;
   if (!loan) {
     return (
       <PageShell>
-        <p className="hand text-lg">That loan doesn't exist any more.</p>
-        <Link to="/" className="sketch-btn mt-4">
-          Back to my loans
+        <p className="font-heading text-lg">That loan doesn't exist any more.</p>
+        <Link to="/setup" className={buttonVariants({ className: "mt-4" })}>
+          Back to my twin
         </Link>
       </PageShell>
     );
@@ -72,7 +71,7 @@ function LoanView({ loan }: { loan: Loan }) {
     remove.mutate(loan.id, {
       onSuccess: () => {
         toast.success("Loan deleted");
-        navigate({ to: "/" });
+        navigate({ to: "/setup" });
       },
       onError: (err) => toast.error(friendlyError(err, "Couldn't delete the loan.")),
     });
@@ -80,195 +79,219 @@ function LoanView({ loan }: { loan: Loan }) {
 
   return (
     <>
-      <Link to="/" className="inline-flex items-center gap-1 text-sm mb-4 hover:underline">
-        <ArrowLeft className="h-4 w-4" /> My loans
+      <Link
+        to="/setup"
+        className={buttonVariants({ variant: "neutral", size: "sm", className: "mb-6" })}
+      >
+        <ArrowLeft /> My twin
       </Link>
 
-      <div className="flex items-start justify-between flex-wrap gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 grid place-items-center rounded-2xl border-2 border-ink bg-butter text-3xl">
+          <span className="grid size-14 place-items-center rounded-base border-2 border-border bg-main text-3xl shadow-shadow">
             {kind.emoji}
-          </div>
+          </span>
           <div>
-            <SectionLabel>
+            <SectionLabel className="mb-1">
               {kind.label}
               {loan.lender ? ` · ${loan.lender}` : ""} · {loan.annualRate}% a year
             </SectionLabel>
-            <h1 className="font-headline text-4xl md:text-5xl">{loan.name}</h1>
+            <h1 className="font-display text-4xl leading-tight md:text-5xl">{loan.name}</h1>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link to="/loans/$id/edit" params={{ id: loan.id }} className="sketch-btn-ghost text-sm">
-            <Pencil className="h-4 w-4" /> Edit
-          </Link>
-          <button
-            onClick={onDelete}
-            className="sketch-btn-ghost text-sm"
-            disabled={remove.isPending}
+        <div className="flex gap-3">
+          <Link
+            to="/loans/$id/edit"
+            params={{ id: loan.id }}
+            className={buttonVariants({ variant: "neutral" })}
           >
-            <Trash2 className="h-4 w-4" /> Delete
-          </button>
+            <Pencil /> Edit
+          </Link>
+          <Button variant="neutral" onClick={onDelete} disabled={remove.isPending}>
+            <Trash2 /> Delete
+          </Button>
         </div>
       </div>
 
       {s.neverEnds && (
-        <div className="chip bg-coral text-white mt-6">
-          This EMI doesn't cover the monthly interest, so the balance never goes down. Check the
-          rate and EMI.
-        </div>
+        <Alert className="mt-6 bg-bad">
+          <AlertTriangle />
+          <AlertTitle>This loan never ends</AlertTitle>
+          <AlertDescription>
+            The EMI doesn't cover the monthly interest, so the balance never goes down. Check the
+            rate and EMI.
+          </AlertDescription>
+        </Alert>
       )}
 
-      <SketchCard className="mt-6" hoverable={false}>
-        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-          <div className="font-headline text-2xl">
-            {s.closed ? (
-              <>
-                <Marker>Fully repaid</Marker> 🎉
-              </>
-            ) : (
-              <>
-                <Marker>{Math.round(s.progress * 100)}% repaid</Marker> — {inr(s.outstanding)} to go
-              </>
-            )}
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <CardTitle className="font-display text-2xl">
+              {s.closed ? (
+                <>
+                  <Marker>Fully repaid</Marker> 🎉
+                </>
+              ) : (
+                <>
+                  <Marker>{Math.round(s.progress * 100)}% repaid</Marker> — {inr(s.outstanding)} to
+                  go
+                </>
+              )}
+            </CardTitle>
+            <ToneBadge>
+              {s.emisPaid} of {s.emisPaid + s.emisLeft} EMIs paid
+            </ToneBadge>
           </div>
-          <span className="mini-label">
-            {s.emisPaid} of {s.emisPaid + s.emisLeft} EMIs paid
-          </span>
-        </div>
-        <PaidBar progress={s.progress} size="lg" />
-      </SketchCard>
+        </CardHeader>
+        <CardContent>
+          <PaidBar progress={s.progress} size="lg" />
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-5 grid-cols-2 md:grid-cols-4 mt-6">
+      <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4">
         <StatTile
-          tone="coral"
+          tone="bad"
           label="Still owed"
           value={inr(s.outstanding)}
           hint={`of ${inr(loan.principal)}`}
         />
         <StatTile
-          tone="sky"
+          tone="info"
           label="EMI"
           value={inrFull(s.emi)}
           hint={s.nextDue ? `next on ${monthYear(s.nextDue)}` : "no more EMIs"}
         />
         <StatTile
-          tone="butter"
+          tone="warn"
           label="Ends"
           value={monthYear(s.endDate)}
           hint={s.closed ? "closed" : `${duration(s.emisLeft)} left`}
         />
         <StatTile
-          tone="mint"
+          tone="good"
           label="Interest still to pay"
           value={inr(s.interestRemaining)}
           hint={`${inr(s.totalInterest)} over the whole loan`}
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] mt-6 items-start">
-        <SketchCard hoverable={false}>
-          <SectionLabel>Where your EMIs go</SectionLabel>
-          {paidInEmis > 0 ? (
-            <h3 className="font-headline text-2xl">
-              Of the {inr(paidInEmis)} you’ve paid, <Marker>{inr(s.interestPaid)}</Marker> (
-              {Math.round(interestShare * 100)}%) was interest.
-            </h3>
-          ) : (
-            <h3 className="font-headline text-2xl">
-              Over the loan you’ll pay <Marker>{inr(s.totalInterest)}</Marker> in interest.
-            </h3>
-          )}
-          <p className="hand text-base text-muted-foreground mt-1">
-            Solid bars are years already paid; faded bars are still ahead.
-          </p>
-          <div className="mt-4">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl leading-snug">
+              {paidInEmis > 0 ? (
+                <>
+                  Of the {inr(paidInEmis)} you’ve paid, {inr(s.interestPaid)} (
+                  {Math.round(interestShare * 100)}%) was interest.
+                </>
+              ) : (
+                <>Over the loan you’ll pay {inr(s.totalInterest)} in interest.</>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Solid bars are years already paid; faded bars are still ahead.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <YearlyChart data={yearly} currentYear={new Date().getFullYear()} />
-          </div>
-        </SketchCard>
+          </CardContent>
+        </Card>
 
-        <div className="grid gap-5">
-          {!s.closed && <PrepayCard loan={loan} />}
-          {!s.closed && <BalanceCheckCard loan={loan} computed={s.outstanding} />}
-          {!s.closed && (
-            <SketchCard hoverable={false}>
-              <SectionLabel>Never miss an EMI</SectionLabel>
-              <p className="text-sm">
-                Adds all {s.emisLeft} remaining due dates to your calendar, with a reminder the day
-                before.
-              </p>
-              <button
-                className="sketch-btn-ghost text-sm mt-3"
-                onClick={() =>
-                  downloadFile(
-                    `${loan.name.replace(/[^\w-]+/g, "-")}-emis.ics`,
-                    emiCalendar(loan),
-                    "text/calendar",
-                  )
-                }
-              >
-                <CalendarPlus className="h-4 w-4" /> Add to calendar
-              </button>
-            </SketchCard>
-          )}
-        </div>
+        {!s.closed && (
+          <div className="grid gap-6">
+            <PrepayCard loan={loan} />
+            <BalanceCheckCard loan={loan} computed={s.outstanding} />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Never miss an EMI</CardTitle>
+                <CardDescription>
+                  Adds all {s.emisLeft} remaining due dates to your calendar, with a reminder the
+                  day before.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="neutral"
+                  onClick={() =>
+                    downloadFile(
+                      `${loan.name.replace(/[^\w-]+/g, "-")}-emis.ics`,
+                      emiCalendar(loan),
+                      "text/calendar",
+                    )
+                  }
+                >
+                  <CalendarPlus /> Add to calendar
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </>
   );
 }
 
 function PrepayCard({ loan }: { loan: Loan }) {
+  const id = useId();
   const [amount, setAmount] = useState("100000");
   const value = Math.max(0, Number(amount) || 0);
   const c = useMemo(() => comparePrepayment(loan, value), [loan, value]);
   if (loan.annualRate === 0) return null; // nothing to save on a 0% loan
 
   return (
-    <SketchCard className="bg-marker" hoverable={false}>
-      <SectionLabel>What if I prepay?</SectionLabel>
-      <label className="block">
-        <span className="mini-label">One-time prepayment (₹)</span>
-        <input
-          type="number"
-          min={0}
-          step={10000}
-          className="sketch-input mt-1"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-      </label>
-      {value > 0 && (
-        <div className="grid gap-3 mt-4">
-          <div className="rounded-xl border-2 border-ink bg-card p-3">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold text-sm">Keep EMI, finish sooner</div>
-              <StatusChip tone="good">Best</StatusChip>
-            </div>
-            <div className="font-headline text-xl mt-1">
-              Save {inr(c.reduceTenure.interestSaved)}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {duration(c.reduceTenure.monthsSaved)} sooner · ends{" "}
-              {monthYear(c.reduceTenure.endDate)}
-            </div>
-          </div>
-          <div className="rounded-xl border-2 border-ink bg-card p-3">
-            <div className="font-semibold text-sm">Keep end date, lower EMI</div>
-            <div className="font-headline text-xl mt-1">Save {inr(c.reduceEmi.interestSaved)}</div>
-            <div className="text-xs text-muted-foreground">
-              EMI drops to {inrFull(c.reduceEmi.newEmi)}
-            </div>
-          </div>
-          <p className="text-xs">
-            Your bank will ask which one you want. Shortening the loan almost always saves more.
-          </p>
+    <Card className="bg-main">
+      <CardHeader>
+        <CardTitle className="text-xl">What if I prepay?</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor={id}>One-time prepayment (₹)</Label>
+          <Input
+            id={id}
+            type="number"
+            min={0}
+            step={10000}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
         </div>
-      )}
-    </SketchCard>
+        {value > 0 && (
+          <>
+            <div className="rounded-base border-2 border-border bg-secondary-background p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-heading">Keep EMI, finish sooner</span>
+                <ToneBadge tone="good">Best</ToneBadge>
+              </div>
+              <div className="mt-1 font-display text-xl">
+                Save {inr(c.reduceTenure.interestSaved)}
+              </div>
+              <div className="text-xs text-foreground/70">
+                {duration(c.reduceTenure.monthsSaved)} sooner · ends{" "}
+                {monthYear(c.reduceTenure.endDate)}
+              </div>
+            </div>
+            <div className="rounded-base border-2 border-border bg-secondary-background p-3">
+              <span className="text-sm font-heading">Keep end date, lower EMI</span>
+              <div className="mt-1 font-display text-xl">Save {inr(c.reduceEmi.interestSaved)}</div>
+              <div className="text-xs text-foreground/70">
+                EMI drops to {inrFull(c.reduceEmi.newEmi)}
+              </div>
+            </div>
+            <p className="text-xs">
+              Your bank will ask which one you want. Shortening the loan almost always saves more.
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 function BalanceCheckCard({ loan, computed }: { loan: Loan; computed: number }) {
   const save = useSaveLoan();
+  const amountId = useId();
+  const dateId = useId();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(String(Math.round(computed)));
   const [date, setDate] = useState(toISODate(new Date()));
@@ -291,62 +314,65 @@ function BalanceCheckCard({ loan, computed }: { loan: Loan; computed: number }) 
   }
 
   return (
-    <SketchCard hoverable={false}>
-      <div className="flex items-center gap-2">
-        <Scale className="h-4 w-4" />
-        <SectionLabel>Match your bank</SectionLabel>
-      </div>
-      <p className="text-sm">
-        Rates change and banks round differently. Enter the outstanding amount from your latest
-        statement and we’ll recalculate from there.
-      </p>
-      {check && (
-        <p className="text-xs text-muted-foreground mt-2">
-          Using {inrFull(check.amount)} from your statement on {monthYear(check.date)}.{" "}
-          <button
-            className="underline"
-            onClick={() => save.mutate({ ...loan, balanceCheck: null })}
-            disabled={save.isPending}
-          >
-            Remove
-          </button>
-        </p>
-      )}
-      {open ? (
-        <form onSubmit={submit} className="grid gap-3 mt-3">
-          <input
-            type="number"
-            min={0}
-            className="sketch-input"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            aria-label="Outstanding amount"
-          />
-          <input
-            type="date"
-            className="sketch-input"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            aria-label="Statement date"
-          />
-          <div className="flex gap-2">
-            <button type="submit" className="sketch-btn text-sm" disabled={save.isPending}>
-              Save
-            </button>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Scale className="size-5" /> Match your bank
+        </CardTitle>
+        <CardDescription>
+          Rates change and banks round differently. Enter the outstanding amount from your latest
+          statement and we’ll recalculate from there.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        {check && (
+          <p className="text-xs text-foreground/70">
+            Using {inrFull(check.amount)} from your statement on {monthYear(check.date)}.{" "}
             <button
-              type="button"
-              className="sketch-btn-ghost text-sm"
-              onClick={() => setOpen(false)}
+              className="font-heading underline underline-offset-4"
+              onClick={() => save.mutate({ ...loan, balanceCheck: null })}
+              disabled={save.isPending}
             >
-              Cancel
+              Remove
             </button>
-          </div>
-        </form>
-      ) : (
-        <button className="sketch-btn-ghost text-sm mt-3" onClick={() => setOpen(true)}>
-          Update balance
-        </button>
-      )}
-    </SketchCard>
+          </p>
+        )}
+        {open ? (
+          <form onSubmit={submit} className="grid gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor={amountId}>Outstanding amount (₹)</Label>
+              <Input
+                id={amountId}
+                type="number"
+                min={0}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={dateId}>Statement date</Label>
+              <Input
+                id={dateId}
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button type="submit" disabled={save.isPending}>
+                Save
+              </Button>
+              <Button type="button" variant="neutral" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <Button variant="neutral" className="w-fit" onClick={() => setOpen(true)}>
+            Update balance
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }

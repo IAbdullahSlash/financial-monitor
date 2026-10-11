@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { PageShell, SectionLabel, Marker } from "@/components/fintwin/ui";
+import { Loading, Marker, PageHeading, PageShell } from "@/components/fintwin/ui";
+import { buttonVariants } from "@/components/ui/button";
 import { LoanForm } from "@/components/fintwin/LoanForm";
-import { useLoan, useSaveLoan } from "@/hooks/use-loans";
+import { useLoan, useSaveLoan } from "@/hooks/use-store";
 import { friendlyError } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/loans/$id_/edit")({
@@ -17,18 +18,14 @@ function EditLoan() {
   const save = useSaveLoan();
 
   if (loading) {
-    return (
-      <PageShell>
-        <div className="hand text-lg">Loading…</div>
-      </PageShell>
-    );
+    return <Loading>Loading…</Loading>;
   }
   if (!loan) {
     return (
       <PageShell>
-        <p className="hand text-lg">That loan doesn't exist any more.</p>
-        <Link to="/" className="sketch-btn mt-4">
-          Back to my loans
+        <p className="font-heading text-lg">That loan doesn't exist any more.</p>
+        <Link to="/setup" className={buttonVariants({ className: "mt-4" })}>
+          Back to my twin
         </Link>
       </PageShell>
     );
@@ -36,10 +33,11 @@ function EditLoan() {
 
   return (
     <PageShell>
-      <SectionLabel>Edit loan</SectionLabel>
-      <h1 className="font-headline text-4xl md:text-5xl mb-8">
-        Update <Marker>{loan.name}</Marker>.
-      </h1>
+      <div className="mb-8">
+        <PageHeading eyebrow="Edit loan">
+          Update <Marker>{loan.name}</Marker>.
+        </PageHeading>
+      </div>
       <LoanForm
         existing={loan}
         submitLabel="Save changes"

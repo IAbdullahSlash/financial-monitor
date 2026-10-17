@@ -17,8 +17,7 @@ dist-ssr
 *.local
 .dev
 
-# Generated project documentation and launch-video artifacts
-docs/
+# Generated launch-video artifacts
 brag-output/
 
 # Wrangler / Cloudflare

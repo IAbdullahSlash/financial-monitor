@@ -13,7 +13,8 @@ import { type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import icon from "../media/icon.png?url";
 import { Toaster } from "@/components/ui/sonner";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMoveLocalDataOnSignIn } from "@/hooks/use-store";
 

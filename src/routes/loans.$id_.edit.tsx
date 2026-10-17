@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Loading, Marker, PageHeading, PageShell } from "@/components/fintwin/ui";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { LoanForm } from "@/components/fintwin/LoanForm";
 import { useLoan, useSaveLoan } from "@/hooks/use-store";
 import { friendlyError } from "@/lib/auth-errors";

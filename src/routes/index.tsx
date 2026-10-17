@@ -13,7 +13,7 @@ import {
 import { type Tone } from "@/components/fintwin/tones";
 import { NetWorthChart } from "@/components/fintwin/twin-charts";
 import { moments, type Moment } from "@/components/fintwin/moments";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoans, useTwin } from "@/hooks/use-store";
 import { project, type Twin } from "@/lib/twin";

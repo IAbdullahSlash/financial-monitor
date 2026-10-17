@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { deleteUser } from "firebase/auth";
 import { Download, Lock, Trash2 } from "lucide-react";
 import { Marker, PageHeading, PageShell } from "@/components/fintwin/ui";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import {
   Card,
   CardContent,

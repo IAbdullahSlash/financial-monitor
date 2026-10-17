@@ -27,7 +27,7 @@ export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 
 // Analytics relies on browser APIs, so keep it out of the server-rendering path.
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && import.meta.env.PROD) {
   void import("firebase/analytics")
     .then(async ({ getAnalytics, isSupported }) => {
       if (firebaseConfig.measurementId && (await isSupported())) getAnalytics(firebaseApp);

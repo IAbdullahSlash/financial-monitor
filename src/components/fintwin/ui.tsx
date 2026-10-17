@@ -1,6 +1,6 @@
 // App-level building blocks, composed from the shadcn (neobrutalism) components in components/ui.
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "firebase/auth";
 import {
@@ -18,7 +18,8 @@ import { toneBg, type Tone } from "@/components/fintwin/tones";
 import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/integrations/firebase/client";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Sheet,
@@ -283,9 +284,35 @@ export function StatTile({
 }
 
 export function Loading({ children }: { children: ReactNode }) {
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setTimedOut(true), 8_000);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
   return (
     <PageShell>
-      <p className="font-heading text-lg">{children}</p>
+      {timedOut ? (
+        <div className="grid max-w-md gap-4">
+          <div>
+            <p className="font-heading text-lg">This is taking longer than expected.</p>
+            <p className="mt-2 text-foreground/70">
+              Check your connection, then try loading Fin Twin again.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="neutral"
+            className="w-fit"
+            onClick={() => window.location.reload()}
+          >
+            Try again
+          </Button>
+        </div>
+      ) : (
+        <p className="font-heading text-lg">{children}</p>
+      )}
     </PageShell>
   );
 }

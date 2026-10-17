@@ -1,11 +1,12 @@
 "use client";
 
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
-import { cva, type VariantProps } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { tabsListVariants } from "@/components/ui/tabs-variants";
 
 function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
   return (
@@ -19,21 +20,6 @@ function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive
     />
   );
 }
-
-const tabsListVariants = cva(
-  "group/tabs-list inline-flex items-center justify-center text-foreground data-[orientation=vertical]:h-fit data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch",
-  {
-    variants: {
-      variant: {
-        default: "h-12 rounded-base border-2 border-border bg-background p-1",
-        line: "gap-1 border-b-2 border-border bg-transparent data-[orientation=vertical]:border-r-2 data-[orientation=vertical]:border-b-0",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  },
-);
 
 function TabsList({
   className,
@@ -78,4 +64,4 @@ function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPr
   );
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants };
+export { Tabs, TabsList, TabsTrigger, TabsContent };

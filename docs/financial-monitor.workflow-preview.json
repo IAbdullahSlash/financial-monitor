@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Fin Twin — Major Application Workflow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "baseline", "label": "Build and view", "focus": ["user", "route", "store", "project", "results"], "note": "The dashboard loads financial inputs, projects a future, and presents the result." },
+      { "id": "scenario", "label": "Test a decision", "focus": ["route", "change", "project", "compare", "results"], "note": "What-if changes apply only to a simulated copy before comparison." }
+    ]
+  },
+  "lanes": [
+    { "id": "user", "label": "User & Browser" },
+    { "id": "app", "label": "Fin Twin Application" },
+    { "id": "engine", "label": "Financial Calculation" }
+  ],
+  "phases": [
+    { "id": "input", "label": "Input", "fromCol": 0, "toCol": 1 },
+    { "id": "model", "label": "Model", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "outcome", "label": "Outcome", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["user", "route", "store", "project", "results"],
+  "nodes": [
+    { "id": "user", "lane": "user", "col": 0, "type": "external", "label": "User", "sublabel": "enters money details", "width": 132 },
+    { "id": "route", "lane": "app", "col": 1, "type": "frontend", "label": "Route UI", "sublabel": "setup, dashboard, what-if", "width": 142 },
+    { "id": "store", "lane": "app", "col": 2, "type": "backend", "label": "Store Hooks", "sublabel": "local-first read + save", "width": 138 },
+    { "id": "change", "lane": "app", "col": 3, "type": "frontend", "label": "What-if Change", "sublabel": "draft or saved scenario", "width": 138 },
+    { "id": "project", "lane": "engine", "col": 4, "type": "backend", "label": "Project Monthly Future", "sublabel": "cash flow, loans, goals", "width": 150 },
+    { "id": "compare", "lane": "engine", "col": 5, "type": "backend", "label": "Compare Futures", "sublabel": "baseline vs scenario", "width": 132 },
+    { "id": "results", "lane": "user", "col": 5, "type": "frontend", "label": "Charts & Decisions", "sublabel": "net worth and trade-offs", "width": 148 }
+  ],
+  "edges": [
+    { "id": "open", "from": "user", "to": "route", "label": "open or edit", "role": "main", "variant": "emphasis" },
+    { "id": "load", "from": "route", "to": "store", "label": "read twin + loans", "role": "main" },
+    { "id": "base", "from": "store", "to": "project", "label": "base inputs", "role": "main", "variant": "emphasis" },
+    { "id": "present", "from": "project", "to": "results", "label": "projection + moments", "role": "main", "variant": "emphasis" },
+    { "id": "test", "from": "route", "to": "change", "label": "test decision", "role": "branch" },
+    { "id": "simulate", "from": "change", "to": "project", "label": "simulate changes", "role": "branch", "variant": "dashed" },
+    { "id": "measure", "from": "project", "to": "compare", "label": "base + alternative", "role": "branch" },
+    { "id": "show", "from": "compare", "to": "results", "label": "impact metrics", "role": "return" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Persistence", "items": ["Signed-out users save in localStorage", "Signed-in users sync through Firebase Auth and Cloud Firestore"] },
+    { "dot": "violet", "title": "Safe comparisons", "items": ["The baseline stays unchanged", "Scenario changes are projected separately and compared"] }
+  ]
+}

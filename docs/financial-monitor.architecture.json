@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Fin Twin — Project Architecture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/IAbdullahSlash/financial-monitor.git",
+      "provider": "github",
+      "revision": "af4f899c8ca42b00e2432d357fd8c047eb7c3ab5"
+    },
+    "views": [
+      { "id": "core", "label": "Core projection path", "focus": ["browser", "routes", "store", "twin", "loans", "charts"], "note": "Follow entered financial data through the local-first store and pure calculation engines into the dashboard." },
+      { "id": "sync", "label": "Optional account sync", "focus": ["store", "firebase", "firestore"], "note": "Account sign-in switches persistence to Firebase; local data is migrated after sign-in." },
+      { "id": "runtime", "label": "Web runtime", "focus": ["browser", "start", "routes"], "note": "TanStack Start renders the route application with query caching and SSR error handling." }
+    ]
+  },
+  "layout": { "mode": "grid", "origin": [32, 90], "cols": 5, "gapX": 66, "gapY": 72, "cellW": 145, "cellH": 62 },
+  "components": [
+    { "id": "browser", "type": "external", "label": "User Browser", "sublabel": "financial inputs + views", "row": 1, "col": 0, "sources": [{ "path": "src/routes/index.tsx", "line": 48, "label": "home route" }] },
+    { "id": "start", "type": "cloud", "label": "TanStack Start", "sublabel": "SSR + request middleware", "row": 1, "col": 1, "sources": [{ "path": "src/start.ts", "line": 22, "label": "Start instance" }, { "path": "src/server.ts", "line": 1, "label": "server entry" }] },
+    { "id": "routes", "type": "frontend", "label": "React Route UI", "sublabel": "dashboard, setup, what-if", "row": 1, "col": 2, "sources": [{ "path": "src/routes/__root.tsx", "line": 75, "label": "root providers" }, { "path": "src/routes/what-if.tsx", "line": 56, "label": "scenario UI" }] },
+    { "id": "store", "type": "backend", "label": "Data Store Hooks", "sublabel": "Query + storage policy", "row": 1, "col": 3, "sources": [{ "path": "src/hooks/use-store.ts", "line": 1, "end_line": 12, "label": "storage policy" }, { "path": "src/hooks/use-store.ts", "line": 124, "label": "query hooks" }] },
+    { "id": "charts", "type": "frontend", "label": "Results UI", "sublabel": "charts, moments, comparison", "row": 0, "col": 4, "sources": [{ "path": "src/components/fintwin/twin-charts.tsx", "line": 1, "label": "charts" }, { "path": "src/components/fintwin/moments.ts", "line": 1, "label": "moments" }] },
+    { "id": "twin", "type": "backend", "label": "Twin Engine", "sublabel": "projections + scenarios", "row": 0, "col": 3, "sources": [{ "path": "src/lib/twin.ts", "line": 74, "label": "project()" }, { "path": "src/lib/twin.ts", "line": 220, "label": "comparison" }] },
+    { "id": "loans", "type": "backend", "label": "Loan Maths Engine", "sublabel": "EMI, schedules, prepayment", "row": 0, "col": 2, "sources": [{ "path": "src/lib/loans.ts", "line": 65, "label": "EMI formula" }, { "path": "src/lib/loans.ts", "line": 149, "label": "loan status" }] },
+    { "id": "local", "type": "database", "label": "localStorage", "sublabel": "twin, loans, scenarios", "row": 2, "col": 3, "sources": [{ "path": "src/hooks/use-store.ts", "line": 20, "label": "local keys" }, { "path": "src/hooks/use-store.ts", "line": 24, "label": "local read/write" }] },
+    { "id": "firebase", "type": "security", "label": "Firebase Auth", "sublabel": "email/password identity", "row": 3, "col": 2, "sources": [{ "path": "src/integrations/firebase/client.ts", "line": 1, "label": "Firebase client" }, { "path": "src/hooks/use-auth.ts", "line": 6, "label": "auth observer" }] },
+    { "id": "firestore", "type": "database", "label": "Cloud Firestore", "sublabel": "optional cross-device sync", "row": 3, "col": 4, "sources": [{ "path": "src/hooks/use-store.ts", "line": 56, "label": "Firestore reads/writes" }, { "path": "firestore.rules", "line": 3, "label": "owner-only rules" }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Fin Twin browser application", "wraps": ["routes", "store", "charts", "twin", "loans", "local"], "pad": 24 }
+  ],
+  "connections": [
+    { "id": "visit", "from": "browser", "to": "start", "label": "HTTPS request", "variant": "emphasis" },
+    { "id": "render", "from": "start", "to": "routes", "label": "SSR route", "labelDy": 54 },
+    { "id": "readwrite", "from": "routes", "to": "store" },
+    { "id": "project", "from": "routes", "to": "twin", "label": "project / compare", "variant": "emphasis" },
+    { "id": "loanmath", "from": "twin", "to": "loans", "label": "loan status + EMI" },
+    { "id": "present", "from": "routes", "to": "charts", "fromSide": "top", "toSide": "left" },
+    { "id": "localdata", "from": "store", "to": "local", "label": "signed out", "variant": "dashed", "labelDy": 24 },
+    { "id": "identity", "from": "store", "to": "firebase", "label": "observe sign-in", "variant": "security", "fromSide": "left", "toSide": "top" },
+    { "id": "clouddata", "from": "store", "to": "firestore", "label": "signed in: user-scoped documents", "variant": "security", "labelDy": 54 },
+    { "id": "authorize", "from": "firebase", "to": "firestore", "label": "UID access", "variant": "security", "fromSide": "right", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Local-first", "items": ["Signed-out data never leaves the browser", "Signing in migrates local data into an account"] },
+    { "dot": "emerald", "title": "Calculation core", "items": ["Projection and loan modules are pure, independently tested functions", "The app simulates 30 years; UI charts focus on the first 10"] },
+    { "dot": "rose", "title": "Access control", "items": ["Firebase Auth identifies the user", "Firestore rules restrict profiles and nested user documents to their owner"] }
+  ]
+}

@@ -19,7 +19,9 @@ There is no bank connection. The app only works with numbers the user enters, an
 
 The architecture shows the browser application, TanStack Start runtime, React route layer, local-first store, pure financial engines, and the optional Firebase sync path.
 
-[Open the interactive architecture diagram](docs/financial-monitor.architecture.html)
+[Interactive architecture diagram (HTML)](docs/financial-monitor.architecture.html)
+
+The image below is the static preview. To explore the interactive diagram, download the HTML file and open it in a browser.
 
 ![Fin Twin architecture diagram](docs/financial-monitor.architecture.visual-check.1440x900.light.png)
 
@@ -27,7 +29,9 @@ The architecture shows the browser application, TanStack Start runtime, React ro
 
 The workflow covers the main path from financial input to dashboard results, plus the branch that simulates and compares a what-if decision without changing the baseline.
 
-[Open the interactive workflow diagram](docs/financial-monitor.workflow.html)
+[Interactive workflow diagram (HTML)](docs/financial-monitor.workflow.html)
+
+Download the HTML file and open it in a browser to explore the interactive workflow.
 
 ![Fin Twin application workflow](docs/financial-monitor.workflow.visual-check.1440x900.light.png)
 

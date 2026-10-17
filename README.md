@@ -1,132 +1,138 @@
-# Fin Twin — test money decisions first
+# Fin Twin
 
-Fin Twin builds a simple **financial twin** of you from a few numbers, shows where your money is
-heading over the next 10 years, and lets you try a decision on the twin before you make it for
-real: a car on EMI, a job switch, a career break, a prepayment, a new SIP.
+> Test money decisions on your financial twin before making them in real life.
 
-Built for salaried people in India. **No bank connection, ever.** You type in a few numbers;
-the twin does the maths.
+Fin Twin is a local-first personal-finance planning application for salaried people in India. It turns a small set of self-entered numbers—income, spending, savings, investments, loans, EMIs, and goals—into a month-by-month financial projection. Use it to understand your current trajectory, then safely explore decisions such as financing a car, increasing a SIP, taking a career break, changing jobs, moving city, or prepaying a loan.
 
-## Features
+There is no bank connection. The app only works with numbers the user enters, and it is not financial advice or a prediction.
 
-1. **Build your twin** (about 2 minutes) — take-home pay, monthly spending, savings,
-   investments, monthly SIP, loans/EMIs and up to three goals. Assumptions for pay rise,
-   inflation and investment return have sensible defaults and can be changed.
-2. **Your future** — projected net worth over 10 years, what's left each month, and the moments
-   that matter: loans ending (and the EMI that frees up), goals reached on time or late, the cash
-   cushion running thin, crossing ₹1 crore.
-3. **What if…** — apply one or more changes to a copy of the twin and compare the two futures:
-   money left each month, net worth in 5 and 10 years, goal dates, debt-free date and lowest cash
-   cushion. One-tap starters (car on EMI, phone on no-cost EMI, 6-month break, job switch, moving
-   city, SIP, prepaying a loan) make it usable immediately.
-4. **Saved scenarios** — keep a few what-ifs and see each one's 10-year impact at a glance.
+## What it does
 
-Each loan also has a detail page: interest vs principal by year, a "match your bank" balance
-update, a prepayment comparison (shorter loan vs lower EMI) and EMI dates as a calendar file.
+- Builds a financial twin from monthly income, expenses, cash, investments, SIP contributions, goals, assumptions, and loans.
+- Projects cash flow, net worth, debt, goals, and financial-cushion signals over a 30-year horizon; the dashboard focuses on the first 10 years.
+- Calculates EMIs, repayment schedules, outstanding balances, interest/principal splits, and prepayment trade-offs.
+- Lets users run non-destructive what-if scenarios and compare them against the baseline future.
+- Keeps data in browser `localStorage` by default, with optional Firebase account sync across devices.
+- Exports entered data as JSON and supports permanent deletion of local and synced data.
 
-**Private by default:** works without an account; data stays in the browser. An optional
-account syncs across devices, and anything entered locally moves in on sign-in. Users can export
-their data as JSON or permanently delete it (and their account) from Settings.
+## Architecture preview
 
-## Tech stack
+The architecture shows the browser application, TanStack Start runtime, React route layer, local-first store, pure financial engines, and the optional Firebase sync path.
 
-- [TanStack Start](https://tanstack.com/start) (React 19, file-based routing, SSR) on Vite
-- Tailwind CSS v4 with [shadcn/ui](https://ui.shadcn.com) components from the
-  [neobrutalism](https://neobrutalism.dev) registry (built on Base UI), Recharts, lucide icons,
-  sonner toasts
-- Firebase Auth (email/password) and Cloud Firestore for optional sync
-- Builds for Cloudflare Workers via Nitro
+[Open the interactive architecture diagram](docs/financial-monitor.architecture.html)
 
-## Design system
+![Fin Twin architecture diagram](docs/financial-monitor.architecture.visual-check.1440x900.light.png)
 
-The UI uses the **neobrutalism** theme for shadcn/ui ("Yellow" palette): flat colours, 2px black
-borders, hard 4px offset shadows, 5px corners, Archivo for text and Archivo Black for display
-headings.
+## Workflow preview
 
-- **Tokens** live in `src/styles.css`, taken from the registry preset. Use them, not raw colours:
-  `bg-background`, `bg-secondary-background` (white surfaces), `bg-main` (yellow accent),
-  `text-foreground`, `border-border`, `shadow-shadow`, `rounded-base`, `font-base` /
-  `font-heading` (weights) and `font-display` (headline font). Status colours are `bg-good`,
-  `bg-warn`, `bg-bad` and `bg-info`, always with black text.
-- **Components** live in `src/components/ui` and come from the registry. Add new ones the same
-  way so they match:
+The workflow covers the main path from financial input to dashboard results, plus the branch that simulates and compares a what-if decision without changing the baseline.
 
-  ```bash
-  npx shadcn@latest add @neobrutalism/dialog
-  ```
+[Open the interactive workflow diagram](docs/financial-monitor.workflow.html)
 
-  For a link that looks like a button, put `buttonVariants()` on the router `<Link>` instead of
-  wrapping it in `<Button>`.
+![Fin Twin application workflow](docs/financial-monitor.workflow.visual-check.1440x900.light.png)
 
-- **App building blocks** in `src/components/fintwin/ui.tsx` (`PageShell`, `PageHeading`,
-  `StatTile`, `ToneBadge`, `Marker`, `SectionLabel`) are compositions of those components. Don't
-  add one-off CSS utilities; compose components and tokens instead.
+The editable Archify specifications are available in [docs/financial-monitor.architecture.json](docs/financial-monitor.architecture.json) and [docs/financial-monitor.workflow-preview.json](docs/financial-monitor.workflow-preview.json).
+
+## How it works
+
+1. **Enter a financial picture.** Add take-home pay, normal spending, savings, investments, SIP contributions, goals, assumptions, and loans.
+2. **Model the baseline.** The projection engine simulates each month: income rises annually according to the selected raise assumption, expenses rise with inflation, loans accrue interest and receive EMIs, cash earns interest, and investments grow at the selected return rate.
+3. **Identify meaningful moments.** The app surfaces such events as an EMI ending, a goal being funded late, cash cushion dropping, debt becoming zero, or money running out.
+4. **Test a decision.** A what-if applies one or more changes to a copy of the baseline: purchase with cash or financing, income change, spending change, SIP change, or loan prepayment.
+5. **Compare the futures.** Fin Twin reports changes to monthly free cash, five- and ten-year net worth, goal dates, debt-free date, minimum cushion, and cash-shortfall timing.
+
+## Data and privacy
+
+Fin Twin is local-first:
+
+- **Signed out:** data is stored only in the current browser under `fintwin.twin.v1`, `fintwin.loans.v1`, and `fintwin.scenarios.v1`.
+- **Signed in:** Firebase Authentication identifies the user and Cloud Firestore stores user-scoped documents. The app migrates locally entered data to the account after sign-in.
+- **Access control:** Firestore rules restrict `profiles/{uid}` and `users/{uid}/…` records to their owning authenticated user.
+- **Control:** Settings can export the current data to JSON or delete the data, with an option to delete the Firebase account too.
+
+## Technology
+
+| Area | Implementation |
+| --- | --- |
+| Application runtime | TanStack Start, React 19, Vite, SSR |
+| Routing and server handling | TanStack Router, Start middleware, custom SSR error fallback |
+| Client state | TanStack Query and custom local-first hooks |
+| Financial logic | Pure TypeScript modules for projections and loan calculations |
+| UI | Tailwind CSS v4, Base UI/shadcn components, Recharts, Lucide, Sonner |
+| Optional sync | Firebase Auth and Cloud Firestore |
+| Deployment target | Cloudflare Workers through Nitro |
+
+## Project structure
+
+```text
+src/
+  routes/                    File-based screens: dashboard, setup, loans, what-if, settings, auth
+  hooks/use-store.ts         Local-first data access, Firebase sync, export, deletion, migration
+  hooks/use-auth.ts          Firebase authentication state
+  lib/twin.ts                Monthly financial projection and scenario comparison
+  lib/loans.ts               EMI, amortization, schedules, status, and prepayment calculations
+  lib/calendar.ts            EMI calendar export
+  components/fintwin/        Feature UI, charts, loan form, moments, and auth layout
+  components/ui/             Reusable design-system components
+  integrations/firebase/     Firebase client initialization
+  start.ts / server.ts       Start middleware and SSR server entry
+firestore.rules              Owner-only access rules for synced data
+docs/                        Interactive Archify diagrams and their source specifications
+```
 
 ## Getting started
 
-Requires Node.js 22.18 or newer (the tests run TypeScript directly with Node).
+### Prerequisites
+
+- Node.js 22.18 or later
+- A Firebase web app configuration if account features are required
+
+### Install and run
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in your Firebase web app config
-npm run dev                  # http://localhost:8080
+npm run dev
 ```
 
-The Firebase values come from Firebase console → Project settings → Your apps → Web app.
-`VITE_FIREBASE_MEASUREMENT_ID` is optional (only needed for Google Analytics). These are public
-browser config values; access control is enforced by Firestore security rules.
+The development server URL is printed by Vite.
 
-Deploy the security rules before using accounts, or every save will fail:
+### Configure Firebase
+
+Create `.env.local` at the project root and provide the Firebase web-app values used by `src/integrations/firebase/client.ts`:
+
+```bash
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+# Optional: enables Analytics in production when supported by the browser
+VITE_FIREBASE_MEASUREMENT_ID=
+```
+
+These are browser configuration values, not server secrets. Firestore security rules enforce data access. Before enabling accounts, deploy the included rules:
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
-## Scripts
+## Commands
 
-| Command          | What it does                                 |
-| ---------------- | -------------------------------------------- |
-| `npm run dev`    | Start the dev server                         |
-| `npm run build`  | Production build (Cloudflare Workers)        |
-| `npm test`       | Run the projection and loan-maths unit tests |
-| `npm run lint`   | ESLint + Prettier checks                     |
-| `npm run format` | Format the codebase with Prettier            |
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Run the Vite development server |
+| `npm run build` | Build the production application for Cloudflare Workers |
+| `npm run build:dev` | Build in development mode |
+| `npm run preview` | Preview the production build |
+| `npm test` | Run projection and loan-maths unit tests |
+| `npm run lint` | Run ESLint and Prettier checks |
+| `npm run format` | Format the codebase with Prettier |
 
-## Project structure
+## Design notes
 
-```
-src/
-  lib/twin.ts               The twin: month-by-month projection and what-if comparison (pure, tested)
-  lib/loans.ts              Loan maths: EMI, schedules, prepayment (pure, tested)
-  lib/*.test.ts             Unit tests
-  lib/format.ts             ₹ and date formatting (Indian number grouping)
-  lib/calendar.ts           .ics export for EMI due dates
-  hooks/use-store.ts        Storage: localStorage when signed out, Firestore when signed in
-  components/fintwin/       App UI: shell, loan form, charts, "moments"
-  routes/                   / · /setup · /what-if · /loans/new · /loans/$id · /loans/$id/edit · /settings
-  integrations/firebase/    Firebase client setup
-firestore.rules             Each user can read and write only their own data
-```
+The UI follows a neobrutalism-inspired system: bold Archivo typography, strong borders, flat surfaces, hard offset shadows, and a yellow primary accent. Shared tokens live in `src/styles.css`; feature components compose the reusable primitives in `src/components/ui` instead of introducing one-off styles.
 
-## Data model
+## Disclaimer
 
-Signed-out users: `localStorage` keys `fintwin.twin.v1`, `fintwin.loans.v1` and
-`fintwin.scenarios.v1`.
-
-Signed-in users (Firestore):
-
-- `profiles/{uid}` — `twin`: pay, spending, savings, investments, SIP, goals, assumptions
-- `users/{uid}/loans/{loanId}` — one document per loan
-- `users/{uid}/scenarios/{scenarioId}` — saved what-ifs (a name and a list of changes)
-
-## How the projection works
-
-Each month the twin earns its take-home pay (rising yearly by the pay-rise assumption), spends
-its spending (rising with inflation), pays EMIs on reducing-balance loans and invests its SIP.
-Whatever is left goes to savings, which earn 3% a year; investments grow at the return
-assumption. Goals are paid for in date order as soon as there's enough money — on their date if
-affordable, later if not. If cash runs short, investments cover it; if both run out, the twin
-flags it. The projection runs for 30 years; the charts show the first 10.
-
-It's a projection from your own numbers and assumptions, not a prediction and not financial
-advice.
+Fin Twin is a planning and comparison tool based on user-provided assumptions. It does not connect to financial institutions, execute transactions, or provide investment, tax, lending, or financial advice.

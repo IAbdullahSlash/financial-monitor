@@ -29,8 +29,6 @@ The architecture shows the browser application, TanStack Start runtime, React ro
 
 [Interactive architecture diagram (HTML)](docs/financial-monitor.architecture.html)
 
-The image below is the static preview. To explore the interactive diagram, download the HTML file and open it in a browser.
-
 ![Fin Twin architecture diagram](docs/financial-monitor.architecture.visual-check.1440x900.light.png)
 
 ## Workflow preview
@@ -39,7 +37,6 @@ The workflow covers the main path from financial input to dashboard results, plu
 
 [Interactive workflow diagram (HTML)](docs/financial-monitor.workflow.html)
 
-Download the HTML file and open it in a browser to explore the interactive workflow.
 
 ![Fin Twin application workflow](docs/financial-monitor.workflow.visual-check.1440x900.light.png)
 
@@ -91,59 +88,6 @@ src/
 firestore.rules              Owner-only access rules for synced data
 docs/                        Interactive Archify diagrams and their source specifications
 ```
-
-## Getting started
-
-### Prerequisites
-
-- Node.js 22.18 or later
-- A Firebase web app configuration if account features are required
-
-### Install and run
-
-```bash
-npm install
-npm run dev
-```
-
-The development server URL is printed by Vite.
-
-### Configure Firebase
-
-Create `.env.local` at the project root and provide the Firebase web-app values used by `src/integrations/firebase/client.ts`:
-
-```bash
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-# Optional: enables Analytics in production when supported by the browser
-VITE_FIREBASE_MEASUREMENT_ID=
-```
-
-These are browser configuration values, not server secrets. Firestore security rules enforce data access. Before enabling accounts, deploy the included rules:
-
-```bash
-firebase deploy --only firestore:rules
-```
-
-## Commands
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Run the Vite development server |
-| `npm run build` | Build the production application for Cloudflare Workers |
-| `npm run build:dev` | Build in development mode |
-| `npm run preview` | Preview the production build |
-| `npm test` | Run projection and loan-maths unit tests |
-| `npm run lint` | Run ESLint and Prettier checks |
-| `npm run format` | Format the codebase with Prettier |
-
-## Design notes
-
-The UI follows a neobrutalism-inspired system: bold Archivo typography, strong borders, flat surfaces, hard offset shadows, and a yellow primary accent. Shared tokens live in `src/styles.css`; feature components compose the reusable primitives in `src/components/ui` instead of introducing one-off styles.
 
 ## Disclaimer
 

@@ -2,6 +2,14 @@
 
 > Test money decisions on your financial twin before making them in real life.
 
+## Platform video
+
+https://github.com/user-attachments/assets/f005f1f3-f2fc-449b-aa64-b2356cc51544
+
+<sub><b>25 s · 1080p · with sound.</b> From everyday money decisions to your financial twin, projections, and what-if comparisons. Video not playing? <a href="docs/media/fin-twin-demo.mp4">Download the video</a>.</sub>
+
+---
+
 Fin Twin is a local-first personal-finance planning application for salaried people in India. It turns a small set of self-entered numbers—income, spending, savings, investments, loans, EMIs, and goals—into a month-by-month financial projection. Use it to understand your current trajectory, then safely explore decisions such as financing a car, increasing a SIP, taking a career break, changing jobs, moving city, or prepaying a loan.
 
 There is no bank connection. The app only works with numbers the user enters, and it is not financial advice or a prediction.
